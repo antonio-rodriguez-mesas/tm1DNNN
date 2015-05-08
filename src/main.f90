@@ -179,7 +179,7 @@ PROGRAM TM1DNNN
   ! main parameter sweep
   !--------------------------------------------------------------------
 
-  width_loop: &
+  range_loop: &
   DO IRange= Range0,Range1,dRange
 
      ! --------------------------------------------------     
@@ -355,10 +355,10 @@ tmm_loop:&
               Ilayer= (Iter1-1)*NOfOrtho+Iter2
               
               ! do the TM multiplication             
-              CALL TMMult2DZZ( PsiA, PsiB, Ilayer, &
+              CALL TMMultNNN( PsiA, PsiB, Ilayer, &
                    Energy, DiagDis, KappaA, KappaB, IRange) 
 
-              CALL TMMult2DZZ( PsiB, PsiA, Ilayer+1, &
+              CALL TMMultNNN( PsiB, PsiA, Ilayer+1, &
                    Energy, DiagDis, KappaB, KappaA, IRange)  
 
               !CALL Swap( PsiA, PsiB, IRange)
@@ -626,10 +626,10 @@ tmm_loop:&
      !ENDIF
 
      !-----------------------------------------------------------------
-     ! end of width loop
+     ! end of range loop
      !-----------------------------------------------------------------
 
-  ENDDO width_loop
+  ENDDO range_loop
 
   STOP "TM1DNNN $Revision:$"
 

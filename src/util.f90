@@ -12,6 +12,104 @@
 ! ********************************************************************
 
 !--------------------------------------------------------------------
+! TMMultNNN:
+!
+! Multiplication of the transfer matrix onto the vector (PSI_A,PSI_B), 
+! giving (PSI_B,PSI_A) so that the structure of the transfer matrix 
+! can be exploited
+!-----------------------------------------------------------------------
+
+SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, En, DiagDis, KappaA, KappaB, M )
+
+  USE MyNumbers
+  USE IPara
+  USE RNG
+  USE DPara
+  
+  ! wave functions:
+  !       
+  ! (PSI_A, PSI_B) on input, (PSI_B,PSI_A) on output
+  
+  IMPLICIT NONE
+  
+  INTEGER Ilayer,           &! current # TM multiplications
+       M                     ! strip width
+  
+  REAL(KIND=RKIND)  DiagDis,&! diagonal disorder
+       En,                  &! energy
+       KappaA,              &! inter-layer hopping odd
+       KappaB                ! inter-layer hopping even
+
+  
+  COMPLEX(KIND=CKIND) PSI_A(M,M), PSI_B(M,M)
+  
+  INTEGER iSite, jState
+  REAL(KIND=RKIND) OnsitePot
+  COMPLEX(KIND=CKIND) new, PsiLeft, PsiRight
+
+  ! first TM 
+  
+  DO iSite=1,M
+     
+     ! create the new onsite potential
+     SELECT CASE(IRNGFlag)
+     CASE(0)
+        OnsitePot= En - DiagDis*(DRANDOM()-0.5D0)
+     CASE(1)
+        OnsitePot= En - DiagDis*(DRANDOM()-0.5D0)*SQRT(12.0D0)
+     !CASE(2)
+        !OnsitePot= En - GRANDOM(ISeedDummy,0.0D0,DiagDis)
+     END SELECT
+     
+     DO jState=1,M
+
+        ! Boundary conditions for the first TM
+        
+        IF (iSite.EQ.1) THEN
+           
+           IF (IBCFlag.EQ.0) THEN
+              PsiLeft= CZERO            ! hard wall BC
+           ELSE IF (IBCFlag.EQ.1) THEN
+              PsiLeft= PSI_A(jState,M)  ! periodic BC
+           ELSE IF (IBCFlag.EQ.2) THEN
+              PsiLeft= -PSI_A(jState,M) ! antiperiodic BC
+           ENDIF
+
+        ELSE IF (iSite.EQ.M) THEN
+              
+           IF (IBCFlag.EQ.0) THEN
+              PsiLeft= CZERO            ! hard wall BC
+           ELSE IF (IBCFlag.EQ.1) THEN
+              PsiLeft= PSI_A(jState,1)  ! periodic BC
+           ELSE IF (IBCFlag.EQ.2) THEN
+              PsiLeft= -PSI_A(jState,1) ! antiperiodic BC
+           ENDIF
+
+        ELSE 
+           PsiLeft= PSI_A(jState,iSite+(-1)**(iSite)) 
+        ENDIF
+
+        PsiRight= PSI_A(jState,iSite-(-1)**(iSite))
+ 
+        new= ( CMPLX(OnsitePot,0.0D0,CKIND) * PSI_A(jState,iSite) &
+             - CMPLX(KappaA,0.0D0,CKIND) * PsiLeft &
+             - CMPLX(KappaB,0.0D0,CKIND) * PsiRight &
+             - PSI_B(jState,iSite) )
+        
+        PSI_B(jState,iSite)= new
+
+     ENDDO ! jState
+  ENDDO ! iSite
+  
+  !PRINT*,"PSIA(1,1),(2,1),(3,1),(4,1)",&
+   !    PSI_A(1,1),PSI_A(2,1),PSI_A(3,1),PSI_A(4,1)
+  !PRINT*,"PSIB(1,1),(2,1),(3,1),(4,1)",&
+   !    PSI_B(1,1),PSI_B(2,1),PSI_B(3,1),PSI_B(4,1)
+  
+  RETURN
+END SUBROUTINE TMMultNNN
+
+!--------------------------------------------------------------------
 ! TMMult2DZZold:
 !
 ! Multiplication of the transfer matrix onto the vector (PSI_A,PSI_B):
