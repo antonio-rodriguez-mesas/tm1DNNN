@@ -1,31 +1,13 @@
 ! ********************************************************************
 !       
-! TMSE2DZZ - Transfer matrix method for the Anderson
-! model with diagonal disorder in zigzag graphene in two dimensions
-!
-! TMSE2DGR - Transfer matrix method for the Anderson
-! model with diagonal disorder in ZZ or AC graphene in two dimensions
+! TM1DNNN - Transfer matrix method for the Anderson model
+! in 1D with finite-range hopping
 !
 ! ********************************************************************
        
 ! ********************************************************************
 !     
 ! $Header: /home/cvs/phsht/GrapheneTMM/src/Restart/ALL/utilC.f90,v 1.1 2011/07/22 17:49:19 ccspam Exp $
-!
-! ********************************************************************
-! $Log: utilC.f90,v $
-! Revision 1.1  2011/07/22 17:49:19  ccspam
-! Programs for ZZ and AC with the restart routine for francesca
-!
-! Revision 1.2  2011/05/31 14:15:17  phsht
-! were BCs wrong?
-!
-! Revision 1.1  2011/05/31 13:55:07  ccspam
-! *** empty log message ***
-!
-! Revision 1.1  2011/05/06 08:13:09  phsht
-! 1st installement
-!
 !
 ! ********************************************************************
 

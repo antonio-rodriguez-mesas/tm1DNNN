@@ -1,7 +1,7 @@
 ! ********************************************************************
 !       
-! TMSEGR - Transfer matrix method for the Anderson
-! model with diagonal disorder in Graphene (ZZ/AC)
+! TM1DNNN - Transfer matrix method for the Anderson model
+! in 1D with finite-range hopping
 !
 ! ********************************************************************
       
@@ -11,19 +11,6 @@
 ! $Header: /home/cvs/phsht/GrapheneTMM/src/Restart/ALL/inout.f90,v 1.1 2011/07/22 17:49:19 ccspam Exp $
 !
 ! ********************************************************************
-
-! **************************************************************************
-! $Log: inout.f90,v $
-! Revision 1.1  2011/07/22 17:49:19  ccspam
-! Programs for ZZ and AC with the restart routine for francesca
-!
-! Revision 1.2  2011/05/31 13:53:43  ccspam
-! *** empty log message ***
-!
-! Revision 1.1  2011/05/06 08:13:09  phsht
-! 1st installement
-!
-! **************************************************************************
 
 ! -----------------------------------------------------------------------
 !Input: Read the input file
@@ -51,7 +38,7 @@ SUBROUTINE Input( IErr )
   IErr = 0
   ILine= 0
   
-  OPEN(UNIT= IChInp, ERR= 120, FILE= "tmseGR.inp",&
+  OPEN(UNIT= IChInp, ERR= 120, FILE= "tm1dNNN.inp",&
        STATUS= 'OLD')
   
   ILine= ILine+1
@@ -101,20 +88,16 @@ SUBROUTINE Input( IErr )
   !PRINT*,"IFluxFlag    = ", IFluxFlag
 
   ILine= ILine+1
-  READ(IChInp,10,ERR=20,END=30) IEdgeFlag
-  !PRINT*,"IEdgeFlag    = ", IEdgeFlag
+  READ(IChInp,10,ERR=20,END=30) Range0
+  !PRINT*,"Range0       = ",Range0
   
   ILine= ILine+1
-  READ(IChInp,10,ERR=20,END=30) Width0
-  !PRINT*,"Width0       = ",Width0
+  READ(IChInp,10,ERR=20,END=30) Range1
+  !PRINT*,"Range1       = ", Range1
   
   ILine= ILine+1
-  READ(IChInp,10,ERR=20,END=30) Width1
-  !PRINT*,"Width1       = ", Width1
-  
-  ILine= ILine+1
-  READ(IChInp,10,ERR=20,END=30) dWidth
-  !PRINT*,"dWidth       = ", dWidth
+  READ(IChInp,10,ERR=20,END=30) dRange
+  !PRINT*,"dRange       = ", dRange
   
   ILine= ILine+1
   READ(IChInp,15,ERR=20,END=30) DiagDis0
@@ -149,10 +132,6 @@ SUBROUTINE Input( IErr )
   !PRINT*,"Kappa        = ", Kappa
   
   ILine= ILine+1
-  READ(IChInp,15,ERR=20,END=30) MagFlux
-  PRINT*,"MagFlux       = ", MagFlux
-  
-  ILine= ILine+1
   READ(IChInp,15,ERR=20,END=30) Epsilon
   !PRINT*,"Epsilon      = ", Epsilon
  
@@ -167,7 +146,6 @@ SUBROUTINE Input( IErr )
   ILine= Iline+1
   READ(IChInp,10,ERR=20,END=30) IRestart
   !PRINT*,"IRestart      = ", IRestart
-
   
 10 FORMAT(16X,I15.1)
   ! 10	FORMAT("IMAXIteration= ",I15.1)
@@ -194,23 +172,23 @@ SUBROUTINE Input( IErr )
      IErr= 1
   ENDIF
   
-  IF( Width0.LE.0 ) THEN
-     PRINT*,"Input(): Width0 <= 0"
+  IF( Range0.LE.0 ) THEN
+     PRINT*,"Input(): Range0 <= 0"
      IErr= 1
   ENDIF
   
-  IF( Width0.GT.MAXWidth ) THEN
-     PRINT*,"Input(): Width0 > MAXWidth (=",MAXWidth,")"
+  IF( Range0.GT.MAXRange ) THEN
+     PRINT*,"Input(): Range0 > MAXRange (=",MAXRange,")"
      IErr= 1
   ENDIF
   
-  IF( Width1.GT.MAXWidth ) THEN
-     PRINT*,"Input(): Width1 > MAXWidth (=",MAXWidth,")"
+  IF( Range1.GT.MAXRange ) THEN
+     PRINT*,"Input(): Range1 > MAXRange (=",MAXRange,")"
      IErr= 1
   ENDIF
   
-  IF( (Width0.GT.Width1) .AND. (dWidth.GT.0) ) THEN
-     PRINT*,"Input(): Width0 > Width1 and dWidth>0"
+  IF( (Range0.GT.Range1) .AND. (dRange.GT.0) ) THEN
+     PRINT*,"Input(): Range0 > Range1 and dRange>0"
      IErr= 1
   ENDIF
 
@@ -313,11 +291,10 @@ SUBROUTINE Input( IErr )
   PRINT*,"IWriteFlag    = 1          ; (9) 0/1/2/3/4 = no/log/category/wave fcn/Gamma/RHO output"
   PRINT*,"ISortFlag     = 0          ; (10) 0/1 = no/yes ReSort()"
   PRINT*,"IFluxFlag     = 1          ; (11) 0/1 = DiagDis/Energy loop"
-  PRINT*,"IEdgeFlag     = 1          ; (12) 0/1 = Zigzag/Armchair edge"
   
-  PRINT*,"Width0        = 0          ; (13) minimal width"
-  PRINT*,"Width1        = 0          ; (14) maximal width"
-  PRINT*,"dWidth        = 0          ; (15) width increment"
+  PRINT*,"Range0        = 0          ; (13) minimal width"
+  PRINT*,"Range1        = 0          ; (14) maximal width"
+  PRINT*,"dRange        = 0          ; (15) width increment"
   
   PRINT*,"DiagDis0      = 0.         ; (16) minimal diagonal disorder"
   PRINT*,"DiagDis1      = 5.         ; (17) maximal  diagonal disorder"
@@ -404,17 +381,14 @@ SUBROUTINE SaveCurrent(IErr)
      WRITE(IChInp,212,ERR=20) IFluxFlag
 212  FORMAT("IFluxFlag    = ", I15.1)
 
-     WRITE(IChInp,213,ERR=20) IEdgeFlag
-213  FORMAT("IEdgeFlag    = ", I15.1)
+     WRITE(IChInp,214,ERR=20) Range0
+214  FORMAT("Range0       = ", I15.1)
      
-     WRITE(IChInp,214,ERR=20) Width0
-214  FORMAT("Width0       = ", I15.1)
+     WRITE(IChInp,215,ERR=20) Range1
+215  FORMAT("Range1       = ", I15.1)
      
-     WRITE(IChInp,215,ERR=20) Width1
-215  FORMAT("Width1       = ", I15.1)
-     
-     WRITE(IChInp,216,ERR=20) dWidth
-216  FORMAT("dWidth       = ", I15.1)
+     WRITE(IChInp,216,ERR=20) dRange
+216  FORMAT("dRange       = ", I15.1)
      
      WRITE(IChInp,217,ERR=20) DiagDis
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -505,9 +479,9 @@ SUBROUTINE CheckOutputAvg( IErr )
   !   WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IWidth,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
   ELSE
-     WRITE(CName,301) IWidth,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
   ENDIF
 
 300  FORMAT(I4.4,A2,I5.5,A9)
@@ -557,15 +531,15 @@ SUBROUTINE OpenOutputAvg( IErr )
    !	WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IWidth,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
   ELSE
-     WRITE(CName,301) IWidth,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
   ENDIF
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IWidth,"W-",ISeed,"S-Dis.psi"
+     WRITE(PName,300) IRange,"W-",ISeed,"S-Dis.psi"
   ELSE
-     WRITE(PName,301) IWidth,"W-",ISeed,"S-Ene.psi"
+     WRITE(PName,301) IRange,"W-",ISeed,"S-Ene.psi"
   ENDIF
 
 300  FORMAT(I4.4,A2,I5.5,A9)
@@ -611,17 +585,14 @@ SUBROUTINE OpenOutputAvg( IErr )
      WRITE(IChOut,212,ERR=20) IFluxFlag
 212  FORMAT("IFluxFlag    = ", I15.1)
 
-     WRITE(IChOut,213,ERR=20) IEdgeFlag
-213  FORMAT("IEdgeFlag    = ", I15.1)
+     WRITE(IChOut,214,ERR=20) Range0
+214  FORMAT("Range0       = ", I15.1)
      
-     WRITE(IChOut,214,ERR=20) Width0
-214  FORMAT("Width0       = ", I15.1)
+     WRITE(IChOut,215,ERR=20) Range1
+215  FORMAT("Range1       = ", I15.1)
      
-     WRITE(IChOut,215,ERR=20) Width1
-215  FORMAT("Width1       = ", I15.1)
-     
-     WRITE(IChOut,216,ERR=20) dWidth
-216  FORMAT("dWidth       = ", I15.1)
+     WRITE(IChOut,216,ERR=20) dRange
+216  FORMAT("dRange       = ", I15.1)
      
      WRITE(IChOut,217,ERR=20) DiagDis0
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -710,15 +681,15 @@ SUBROUTINE ReOpenOutputAvg( IErr )
   ! WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IWidth,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
   ELSE
-     WRITE(CName,301) IWidth,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
   ENDIF
 
  IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IWidth,"W-",ISeed,"S-Dis.psi"
+     WRITE(PName,300) IRange,"W-",ISeed,"S-Dis.psi"
   ELSE
-     WRITE(PName,301) IWidth,"W-",ISeed,"S-Ene.psi"
+     WRITE(PName,301) IRange,"W-",ISeed,"S-Ene.psi"
   ENDIF
 
 300  FORMAT(I4.4,A2,I5.5,A9)
@@ -746,7 +717,7 @@ END SUBROUTINE ReOpenOutputAvg
 !---------------------------------------------------------------------
 
 SUBROUTINE WriteOutputAvg(&
-     IWidth, 	&
+     IRange, 	&
      DiagDis, 	&
      Energy,	&
      gam, var, NOfL,  &
@@ -763,9 +734,9 @@ SUBROUTINE WriteOutputAvg(&
   
   USE IChannels
   
-  INTEGER IWidth, NOfL, IErr, TMM_CONVERGED
+  INTEGER IRange, NOfL, IErr, TMM_CONVERGED
   REAL(KIND=RKIND) DiagDis, Energy,&
-       psi(IWidth,IWidth)
+       psi(IRange,IRange)
   
   REAL(KIND=RKIND) gam(NOfL), var(NOfL)
   
@@ -813,7 +784,7 @@ END SUBROUTINE WriteOutputAvg
 !---------------------------------------------------------------------
 
 SUBROUTINE WriteOutputPsi(&
-     Ilayer, IWidth,	&
+     Ilayer, IRange,	&
      psi,	&
      IErr)
         
@@ -827,8 +798,8 @@ SUBROUTINE WriteOutputPsi(&
   
   USE IChannels
   
-  INTEGER Ilayer, IErr, IWidth
-  COMPLEX(KIND=CKIND) psi(IWidth,IWidth)
+  INTEGER Ilayer, IErr, IRange
+  COMPLEX(KIND=CKIND) psi(IRange,IRange)
   
   INTEGER jState, iSite
 
@@ -838,9 +809,9 @@ SUBROUTINE WriteOutputPsi(&
         
         DO jState= 1, 1
            
-           DO iSite= 1, IWidth
+           DO iSite= 1, IRange
               WRITE(IChOutPsi,550,ERR=10) Ilayer, iSite,&
-                   psi(IWidth+1-jState,iSite)**2
+                   psi(IRange+1-jState,iSite)**2
 550           FORMAT( I9.1, " ", I4.1, " ", 1(F25.15), " ", 1(F25.15) )
            ENDDO
               
@@ -902,7 +873,7 @@ END SUBROUTINE CloseOutputAvg
 !	IErr	error code
 !-------------------------------------------------------------------
 
-SUBROUTINE OpenOutputGamma( IWidth, &
+SUBROUTINE OpenOutputGamma( IRange, &
            DiagDis, Energy,  &
            IErr )
 
@@ -916,7 +887,7 @@ SUBROUTINE OpenOutputGamma( IWidth, &
 
 	USE IChannels
 
-   INTEGER IWidth, IErr
+   INTEGER IRange, IErr
    REAL(KIND=RKIND) DiagDis, Energy
 	
 	INTEGER ICh
@@ -934,7 +905,7 @@ SUBROUTINE OpenOutputGamma( IWidth, &
    IF( Energy.GE.-1.0D-10 ) THEN
 
 		WRITE(CNameP, 100)                        &
-            IWidth,".",									&
+            IRange,".",									&
             NINT(100.0D0*ABS(DiagDis)),".",		&
             NINT(100.0D0*ABS(Energy))
 100	FORMAT(I4.4,A1,I4.4,A1,I4.4)
@@ -944,7 +915,7 @@ SUBROUTINE OpenOutputGamma( IWidth, &
 	ELSE
 
 		WRITE(CNameM, 200)                         &
-		      IWidth,".",			 &
+		      IRange,".",			 &
 		      NINT(100.0D0*ABS(DiagDis)),".-",		 &
 		      NINT(100.0D0*ABS(Energy))
 200	FORMAT(I4.4,A1,I4.4,A2,I4.4) 
@@ -1167,14 +1138,14 @@ SUBROUTINE RestartRoutineZZENEHW(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1204,14 +1175,14 @@ SUBROUTINE RestartRoutineZZENEHW(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-ZZ-HW-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-ZZ-HW-ENE-w",trim(adjustl(StrRange)),&
        "-d",trim(adjustl(StrDis))
 
-  WRITE(NewJobname,*) "R-TMM-ZZ-HW-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-ZZ-HW-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-ZZ-HW-ENE-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-ZZ-HW-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -1278,14 +1249,14 @@ SUBROUTINE RestartRoutineZZENEPBC(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1315,14 +1286,14 @@ SUBROUTINE RestartRoutineZZENEPBC(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-ZZ-PBC-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-ZZ-PBC-ENE-w",trim(adjustl(StrRange)),&
        "-d",trim(adjustl(StrDis))
 
-  WRITE(NewJobname,*) "R-TMM-ZZ-PBC-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-ZZ-PBC-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-ZZ-PBC-ENE-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-ZZ-PBC-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -1389,14 +1360,14 @@ SUBROUTINE RestartRoutineACENEHW(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1426,14 +1397,14 @@ SUBROUTINE RestartRoutineACENEHW(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-AC-HW-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-AC-HW-ENE-w",trim(adjustl(StrRange)),&
        "-d",trim(adjustl(StrDis))
 
-  WRITE(NewJobname,*) "R-TMM-AC-HW-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-AC-HW-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-AC-HW-ENE-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-AC-HW-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -1500,14 +1471,14 @@ SUBROUTINE RestartRoutineACENEPBC(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1537,14 +1508,14 @@ SUBROUTINE RestartRoutineACENEPBC(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-AC-PBC-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-AC-PBC-ENE-w",trim(adjustl(StrRange)),&
        "-d",trim(adjustl(StrDis))
 
-  WRITE(NewJobname,*) "R-TMM-AC-PBC-ENE-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-AC-PBC-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-AC-PBC-ENE-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-AC-PBC-ENE-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -1611,14 +1582,14 @@ SUBROUTINE RestartRoutineZZDISHW(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1648,14 +1619,14 @@ SUBROUTINE RestartRoutineZZDISHW(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-ZZ-HW-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-ZZ-HW-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)) 
 
-  WRITE(NewJobname,*) "R-TMM-ZZ-HW-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-ZZ-HW-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-ZZ-HW-DIS-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-ZZ-HW-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -1722,14 +1693,14 @@ SUBROUTINE RestartRoutineZZDISPBC(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1759,14 +1730,14 @@ SUBROUTINE RestartRoutineZZDISPBC(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-ZZ-PBC-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-ZZ-PBC-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)) 
 
-  WRITE(NewJobname,*) "R-TMM-ZZ-PBC-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-ZZ-PBC-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-ZZ-PBC-DIS-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-ZZ-PBC-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -1833,14 +1804,14 @@ SUBROUTINE RestartRoutineACDISHW(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1870,14 +1841,14 @@ SUBROUTINE RestartRoutineACDISHW(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-AC-HW-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-AC-HW-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)) 
 
-  WRITE(NewJobname,*) "R-TMM-AC-HW-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-AC-HW-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-AC-HW-DIS-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-AC-HW-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -1944,14 +1915,14 @@ SUBROUTINE RestartRoutineACDISPBC(IErr)
 
    INTEGER(KIND=IKIND) ::  a, b, i
    CHARACTER(100) :: Jobname, NewJobname, OutJobname, &
-                     StrDis,StrEne0,StrWalltime,StrWidth
+                     StrDis,StrEne0,StrWalltime,StrRange
 
    !PRINT*, "flag: restartroutine - assigned data types"     
 
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrWidth,'(I6)') Width0
+   WRITE(StrRange,'(I6)') Range0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1981,14 +1952,14 @@ SUBROUTINE RestartRoutineACDISPBC(IErr)
 
  ! PRINT*, "flag: restartroutine - trimmed initial strings"  
 
-  WRITE(Jobname,*) "TMM-AC-PBC-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(Jobname,*) "TMM-AC-PBC-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)) 
 
-  WRITE(NewJobname,*) "R-TMM-AC-PBC-DIS-w",trim(adjustl(StrWidth)),&
+  WRITE(NewJobname,*) "R-TMM-AC-PBC-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".pbs"
 
-   WRITE(OutJobname,*) "R-TMM-AC-PBC-DIS-w",trim(adjustl(StrWidth)),&
+   WRITE(OutJobname,*) "R-TMM-AC-PBC-DIS-w",trim(adjustl(StrRange)),&
        "-e",trim(adjustl(StrEne0)),&
        "-d",trim(adjustl(StrDis)),".out"
 
@@ -2036,7 +2007,7 @@ END SUBROUTINE RestartRoutineACDISPBC
 !---------------------------------------------------------------------
 
 SUBROUTINE SaveCurrentParameters( &
-  IWidth, flux, IErr)
+  IRange, flux, IErr)
   
   USE MyNumbers
   
@@ -2048,7 +2019,7 @@ SUBROUTINE SaveCurrentParameters( &
   
   USE IChannels
   
-  INTEGER IWidth, IErr
+  INTEGER IRange, IErr
   REAL(KIND=RKIND) flux
 
   CHARACTER*8 CName
@@ -2062,7 +2033,7 @@ SUBROUTINE SaveCurrentParameters( &
   OPEN(UNIT= IChtmp, ERR= 10, STATUS= 'UNKNOWN',&
        FILE="tmseXd.tmp")
 
-  WRITE(IChtmp,100,ERR=20) IWidth, flux
+  WRITE(IChtmp,100,ERR=20) IRange, flux
 100 FORMAT(I15.1,F18.9)
 
   CLOSE(UNIT= IChtmp, ERR=40)
@@ -2091,7 +2062,7 @@ END SUBROUTINE SaveCurrentParameters
 !----------------------------------------------------------------------
 
 SUBROUTINE ReloadCurrentParameters( &
-  IWidth, flux, IErr)
+  IRange, flux, IErr)
   
   USE MyNumbers
   
@@ -2103,7 +2074,7 @@ SUBROUTINE ReloadCurrentParameters( &
   
   USE IChannels
   
-  INTEGER IWidth, IErr
+  INTEGER IRange, IErr
   REAL(KIND=RKIND) flux
 
   CHARACTER*8 CName
@@ -2117,7 +2088,7 @@ SUBROUTINE ReloadCurrentParameters( &
   OPEN(UNIT= IChtmp, ERR= 10, STATUS= 'OLD',&
        FILE="tmseXd.tmp")
 
-  READ(IChtmp,100,ERR=20,END=30) IWidth, flux
+  READ(IChtmp,100,ERR=20,END=30) IRange, flux
 100 FORMAT(I15.1,F18.9)
 
   CLOSE(UNIT= IChtmp, ERR=40)
@@ -2151,7 +2122,7 @@ END SUBROUTINE ReloadCurrentParameters
 !--------------------------------------------------------------------
 
 SUBROUTINE DeleteCurrentParameters( &
-  IWidth, IErr)
+  IRange, IErr)
   
   USE MyNumbers
   
@@ -2163,7 +2134,7 @@ SUBROUTINE DeleteCurrentParameters( &
   
   USE IChannels
   
-  INTEGER IWidth, IErr
+  INTEGER IRange, IErr
 
   ! PRINT*,"DBG: ReOpenOutputAvg()"
 
@@ -2194,7 +2165,7 @@ END SUBROUTINE DeleteCurrentParameters
 !--------------------------------------------------------------------
 
 SUBROUTINE WriteOutputAvgRHO(  		&
-     IChannelOut, IWidth, IChannelMax,	&
+     IChannelOut, IRange, IChannelMax,	&
      DiagDis, Energy,			&
      rhoMat, NOfL, NSamples,		&
      IErr )
@@ -2209,10 +2180,10 @@ SUBROUTINE WriteOutputAvgRHO(  		&
 	
    USE IChannels
 
-   INTEGER IWidth, IChannelOut, IChannelMax, NOfL, NSamples, IErr
+   INTEGER IRange, IChannelOut, IChannelMax, NOfL, NSamples, IErr
    REAL(KIND=RKIND) DiagDis, Energy
 
-   REAL(KIND=RKIND) rhoMat(IWidth,0:IChannelMax) 
+   REAL(KIND=RKIND) rhoMat(IRange,0:IChannelMax) 
 
    INTEGER iState, jChannel, iL
 
@@ -2223,7 +2194,7 @@ SUBROUTINE WriteOutputAvgRHO(  		&
 !	average Lyapunov exponent Gamma
 
    DO jChannel=0,IChannelMax
-       DO iState= 1,IWidth
+       DO iState= 1,IRange
 
 		   WRITE(IChannelOut,410,ERR=10) &
                 jChannel, iState, &
@@ -2252,55 +2223,55 @@ END SUBROUTINE WriteOutputAvgRHO
 !--------------------------------------------------------------------
 
 SUBROUTINE WriteOutputAvgRHOX(  	&
-     IChannelOut, IWidth, IChannelMax,	&
+     IChannelOut, IRange, IChannelMax,	&
      DiagDis, Energy,			&
      rhoMat, NOfL, NSamples,		&
      IErr )
   
-   USE MyNumbers
-   
-   USE CConstants
-   USE IConstants
-
-   USE IPara
-   USE DPara
-	
-	USE IChannels
-
-	INTEGER IWidth, IChannelOut, IChannelMax, NOfL, NSamples, IErr
-   REAL(KIND=RKIND) DiagDis, Energy
-
-	REAL(KIND=RKIND) rhoMat(0:IChannelMax,0:IChannelMax) 
-
-   INTEGER iChannel, jChannel, iL
-
-! PRINT*,"DBG: WriteOutputAvgRHO()"
-
-	IErr= 0
-
-!	average Lyapunov exponent Gamma
-
-   DO iChannel=0,IChannelMax
-      DO jChannel= 0,IChannelMax
-         
-         WRITE(IChannelOut,410,ERR=10) &
-              iChannel, jChannel, &
-              DiagDis, Energy,	&
-              rhoMat(iChannel,jChannel)/REAL(NSamples)
-         
-410      FORMAT(" ", I7.1, " ", I7.1, &
-              " ", F15.6, " ", F15.6, &
-              " ", G25.16)
-      ENDDO
-   ENDDO
-   
-   RETURN
-   
-   !	ERR in Write detected
+  USE MyNumbers
+  
+  USE CConstants
+  USE IConstants
+  
+  USE IPara
+  USE DPara
+  
+  USE IChannels
+  
+  INTEGER IRange, IChannelOut, IChannelMax, NOfL, NSamples, IErr
+  REAL(KIND=RKIND) DiagDis, Energy
+  
+  REAL(KIND=RKIND) rhoMat(0:IChannelMax,0:IChannelMax) 
+  
+  INTEGER iChannel, jChannel, iL
+  
+  ! PRINT*,"DBG: WriteOutputAvgRHO()"
+  
+  IErr= 0
+  
+  !	average Lyapunov exponent Gamma
+  
+  DO iChannel=0,IChannelMax
+     DO jChannel= 0,IChannelMax
+        
+        WRITE(IChannelOut,410,ERR=10) &
+             iChannel, jChannel, &
+             DiagDis, Energy,	&
+             rhoMat(iChannel,jChannel)/REAL(NSamples)
+        
+410     FORMAT(" ", I7.1, " ", I7.1, &
+             " ", F15.6, " ", F15.6, &
+             " ", G25.16)
+     ENDDO
+  ENDDO
+  
+  RETURN
+  
+  !	ERR in Write detected
 10 PRINT*,"WriteOutputAvgRHOX(): ERR in WRITE()"
-   IErr= 1
-   RETURN
-
+  IErr= 1
+  RETURN
+  
 END SUBROUTINE WriteOutputAvgRHOX
 
 
@@ -2310,7 +2281,7 @@ END SUBROUTINE WriteOutputAvgRHOX
 !	IErr	error code
 !-------------------------------------------------------------------
 
-SUBROUTINE OpenOutputRHO( IWidth, &
+SUBROUTINE OpenOutputRHO( IRange, &
            DiagDis, Energy,  &
            IErr )
 
@@ -2324,7 +2295,7 @@ SUBROUTINE OpenOutputRHO( IWidth, &
   
   USE IChannels
   
-  INTEGER IWidth, IErr
+  INTEGER IRange, IErr
   REAL(KIND=RKIND) DiagDis, Energy
   
   INTEGER ICh
@@ -2342,7 +2313,7 @@ SUBROUTINE OpenOutputRHO( IWidth, &
   IF( Energy.GE.-1.0D-10 ) THEN
      
      WRITE(CNameP, 100) &
-          IWidth,".",	&
+          IRange,".",	&
           NINT(100.0D0*ABS(DiagDis)),".", &
           NINT(100.0D0*ABS(Energy)),".rho"
 100  FORMAT(I4.4,A1,I4.4,A1,I4.4,A4)
@@ -2352,7 +2323,7 @@ SUBROUTINE OpenOutputRHO( IWidth, &
   ELSE
      
      WRITE(CNameM, 200) &
-          IWidth,".",	&
+          IRange,".",	&
           NINT(100.0D0*ABS(DiagDis)),".-", &
           NINT(100.0D0*ABS(Energy)),".rho"
 200  FORMAT(I4.4,A1,I4.4,A2,I4.4,A4) 
@@ -2378,7 +2349,7 @@ END SUBROUTINE OpenOutputRHO
 !-------------------------------------------------------------------
 
 SUBROUTINE WriteOutputRHO(  &
-     IChannelOut, IWidth, IChannelMax,	&
+     IChannelOut, IRange, IChannelMax,	&
      DiagDis, Energy,	&
      rhoMat, NOfL, NSamples,	&
      IErr )
@@ -2393,10 +2364,10 @@ SUBROUTINE WriteOutputRHO(  &
   
   USE IChannels
   
-  INTEGER IWidth, IChannelOut, IChannelMax, NOfL, NSamples, IErr
+  INTEGER IRange, IChannelOut, IChannelMax, NOfL, NSamples, IErr
   REAL(KIND=RKIND) DiagDis, Energy
   
-  REAL(KIND=RKIND) rhoMat(IWidth,0:IChannelMax) 
+  REAL(KIND=RKIND) rhoMat(IRange,0:IChannelMax) 
   
   INTEGER iState, jChannel, iL
   
@@ -2407,7 +2378,7 @@ SUBROUTINE WriteOutputRHO(  &
   !	average Lyapunov exponent Gamma
   
   DO jChannel=0,IChannelMax
-     DO iState= 1,IWidth
+     DO iState= 1,IRange
         
         WRITE(IChannelOut,410,ERR=10) &
              NSamples,jChannel, iState, &
@@ -2473,7 +2444,7 @@ END SUBROUTINE CloseOutputRHO
 !---------------------------------------------------------------------
 
 SUBROUTINE WriteOutputHAV(&
-     IWidth, 	&
+     IRange, 	&
      DiagDis, 	&
      Energy,	&
      gam, NOfL,  &
@@ -2490,7 +2461,7 @@ SUBROUTINE WriteOutputHAV(&
   
   USE IChannels
   
-  INTEGER IWidth, NOfL, IErr
+  INTEGER IRange, NOfL, IErr
   REAL(KIND=RKIND) DiagDis, Energy
   REAL(KIND=RKIND) gam(NOfL), sumhavg
 
@@ -2535,7 +2506,7 @@ END SUBROUTINE WriteOutputHAV
 !	IErr	error code
 !-------------------------------------------------------------------
 
-SUBROUTINE OutputEVals( ILayer, IWidth, IElements, Disorder,Energy, EVals, Csur, IErr )
+SUBROUTINE OutputEVals( ILayer, IRange, IElements, Disorder,Energy, EVals, Csur, IErr )
   
   USE MyNumbers
   
@@ -2547,10 +2518,10 @@ SUBROUTINE OutputEVals( ILayer, IWidth, IElements, Disorder,Energy, EVals, Csur,
   
   USE IChannels
   
-  INTEGER ILayer, IWidth, IElements, iState, IErr
+  INTEGER ILayer, IRange, IElements, iState, IErr
   REAL(KIND=RKIND) Disorder, Energy
   CHARACTER*4 Csur
-  COMPLEX(KIND=CKIND) EVals(IWidth)
+  COMPLEX(KIND=CKIND) EVals(IRange)
   !EXTERNAL ARG
 
   CHARACTER*38 CNameP
@@ -2572,7 +2543,7 @@ SUBROUTINE OutputEVals( ILayer, IWidth, IElements, Disorder,Energy, EVals, Csur,
   IF( Energy.GE.-1.0D-10 ) THEN
      
      WRITE(CNameP, '(I4.4,A1,I6.6,A1,I6.6,A1,I6.6,A1,I5.5,A4)') &
-          IWidth,".", &
+          IRange,".", &
           ISeed, ".", &
           NINT(10000.0D0*ABS(Disorder)),".",		&
           NINT(10000.0D0*ABS(Energy)),".",ILayer/(NOfPrint*NOfOrtho),Csur
@@ -2584,7 +2555,7 @@ SUBROUTINE OutputEVals( ILayer, IWidth, IElements, Disorder,Energy, EVals, Csur,
   ELSE
      
      WRITE(CNameM, '(I4.4,A1,I6.6,A1,I6.6,A2,I6.6,A1,I5.5,A4) ') &
-          IWidth,".", &
+          IRange,".", &
           ISeed, ".", &
           NINT(10000.0D0*ABS(Disorder)),".-",		 &
           NINT(10000.0D0*ABS(Energy)),".",ILayer/(NOfPrint*NOfOrtho),Csur
