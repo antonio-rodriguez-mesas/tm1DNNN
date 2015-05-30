@@ -180,12 +180,12 @@ PROGRAM TM1DNNN
   !--------------------------------------------------------------------
 
   range_loop: &
-  DO IRange= Range0,Range1,dRange
+  DO IRange= IRange0,IRange1,dIRange
 
      ! --------------------------------------------------     
      ! get time at start of the process
      ! --------------------------------------------------
-     T = ETIME(STARTTIME)
+     T = 1!ETIME(STARTTIME)
 
      !--------------------------------------------------------------
      ! the # Lyapunov exponents is maximally .EQ. to IRange
@@ -609,7 +609,7 @@ tmm_loop:&
      ! get time at the end of the process
      ! --------------------------------------------------
 
-     T2 = ETIME(ENDTIME) 
+     T2 = 2!ETIME(ENDTIME) 
 
      TIME(1,1) = T2 -T
      TIME(2,1) = ENDTIME(1)-STARTTIME(1)

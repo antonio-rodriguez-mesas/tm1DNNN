@@ -80,7 +80,7 @@ END MODULE IConstants
 !--------------------------------------------------------------------
 MODULE IPara
   INTEGER :: ISeed, NOfIter, NOfOrtho, NOfPrint, NOfGamma
-  INTEGER :: Range0, Range1, dRange, IKeepFlag, IWriteFlag, ISortFlag
+  INTEGER :: IRange0, IRange1, dIRange, IKeepFlag, IWriteFlag, ISortFlag
   INTEGER :: IFluxFlag, IBCFlag, IRNGFlag, IKappaFlag
   INTEGER :: IRestart, IMidDump, IWalltime
   INTEGER :: index1, Iter1, IRange

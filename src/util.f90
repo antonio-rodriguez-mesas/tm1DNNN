@@ -21,7 +21,7 @@
 
 SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
      HopMatiLR, HopMatiL, EMat, dummyMat, OnsitePotVec, &
-     En, DiagDis, M )
+     En, Dis, M )
 
   USE MyNumbers
   USE IPara
@@ -37,7 +37,7 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   INTEGER Ilayer,           &! current # TM multiplications
        M                     ! strip width
   
-  REAL(KIND=RKIND)  DiagDis,&! diagonal disorder
+  REAL(KIND=RKIND)  Dis,&! diagonal disorder
        En                    ! energy
   
   COMPLEX(KIND=CKIND) PSI_A(M,M), PSI_B(M,M)
@@ -52,11 +52,11 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   DO iSite=1,M
      SELECT CASE(IRNGFlag)
      CASE(0)
-        EMat(iSite,iSite)= En - DiagDis*(DRANDOM()-0.5D0)
+        EMat(iSite,iSite)= En - Dis*(DRANDOM()-0.5D0)
      CASE(1)
-        EMat(iSite,iSite)= En - DiagDis*(DRANDOM()-0.5D0)*SQRT(12.0D0)
+        EMat(iSite,iSite)= En - Dis*(DRANDOM()-0.5D0)*SQRT(12.0D0)
      !CASE(2)
-        !EMat(iSite,iSite)= En - GRANDOM(ISeedDummy,0.0D0,DiagDis)
+        !EMat(iSite,iSite)= En - GRANDOM(ISeedDummy,0.0D0,Dis)
      END SELECT
   ENDDO ! iSite
 
