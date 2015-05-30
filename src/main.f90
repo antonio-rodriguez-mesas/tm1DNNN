@@ -90,11 +90,10 @@ PROGRAM TM1DNNN
   CHARACTER*3 EnStr
 
   ! timing variables
-  REAL(4), DIMENSION(1:3,1:1) :: TIME, TIMESUM
-  REAL(4) STARTTIME(2), ENDTIME(2) 
-  REAL(4) T, T2, ETIME
+  INTEGER :: IHours,IMinutes,ISeconds,IMilliSeconds, &
+       IStartTime, ICurrentTime ,IRate
 
-  EXTERNAL ETIME
+  REAL(RKIND) :: Duration, time
 
   !REAL(KIND=RKIND) dummy, dummyB
   INTEGER IErr
@@ -127,10 +126,15 @@ PROGRAM TM1DNNN
   !MS$ENDIF
 
   !--------------------------------------------------------------------
-  ! input handling and timing
+  ! timing startup
   !--------------------------------------------------------------------
 
-  CALL cpu_time(start)
+  CALL SYSTEM_CLOCK(count_rate=IRate)
+  CALL SYSTEM_CLOCK(IStarttime)
+
+  !--------------------------------------------------------------------
+  ! input handling
+  !--------------------------------------------------------------------
 
   CALL Input( IErr )
   !PRINT*, "DBG: IErr=", IErr
@@ -181,11 +185,6 @@ PROGRAM TM1DNNN
 
   range_loop: &
   DO IRange= IRange0,IRange1,dIRange
-
-     ! --------------------------------------------------     
-     ! get time at start of the process
-     ! --------------------------------------------------
-     T = 1!ETIME(STARTTIME)
 
      !--------------------------------------------------------------
      ! the # Lyapunov exponents is maximally .EQ. to IRange
@@ -289,12 +288,11 @@ flux_loop: &
         ! protocoll feature
         !--------------------------------------------------------------
 
-2600    WRITE(*,2610) IRange, DiagDis, Energy, Kappa, MagFlux
+2600    WRITE(*,2610) IRange, DiagDis, Energy, Kappa
 2610    FORMAT("START @ IW= ",I4.1,    &
              ", DD= ", G10.3,          &
              ", En= ", G10.3,          &
-             ", KA= ", G10.3,          &
-             ", Mf= ", G10.3)
+             ", KA= ", G10.3)
 
         !--------------------------------------------------------------
         ! Initialize the convergence flags
@@ -609,21 +607,15 @@ tmm_loop:&
      ! get time at the end of the process
      ! --------------------------------------------------
 
-     T2 = 2!ETIME(ENDTIME) 
-
-     TIME(1,1) = T2 -T
-     TIME(2,1) = ENDTIME(1)-STARTTIME(1)
-     TIME(3,1) = ENDTIME(2)-STARTTIME(2)
-
-     !IF(IWriteFlag.GE.2) THEN
-     T  = TIME(1,1)
-     T2 = TIME(2,1)
-
-     WRITE(*,'(A39,6F12.4)') &
-          "SINGLE PROC --> TIME(USR,SYS,DIFF): ", &
-          & TIME(1,1), TIME(2,1), TIME(3,1)
-
-     !ENDIF
+     CALL SYSTEM_CLOCK(ICurrentTime)
+     Duration=REAL(ICurrentTime-IStartTime)/REAL(IRate)
+     IHours = FLOOR(Duration/3600.0D0)
+     IMinutes = FLOOR(MOD(Duration,3600.0D0)/60.0D0)
+     ISeconds = MOD(Duration,3600.0D0)-IMinutes*60
+     IMilliSeconds = INT((Duration-(IHours*3600+IMinutes*60+ISeconds))*1000,IKIND)
+     
+     PRINT*, "tm1dNNN: used time=", IHours, "hrs ", &
+          IMinutes,"mins ",ISeconds,"secs ", IMilliSeconds,"millisecs"
 
      !-----------------------------------------------------------------
      ! end of range loop
