@@ -549,7 +549,7 @@ SUBROUTINE OpenOutputAvg( IErr )
      OPEN(UNIT=IChOutPsi, ERR=10, STATUS= 'UNKNOWN', FILE=PName)
 
      WRITE(IChOut,201,ERR=20) RStr,DStr,AStr
-201   FORMAT("(* ",3A," *)")
+201  FORMAT("(* ",3A," *)")
      
      WRITE(IChOut,202,ERR=20) ISeed
 202  FORMAT("ISeed        = ", I15.1)
