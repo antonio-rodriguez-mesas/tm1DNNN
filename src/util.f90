@@ -48,7 +48,7 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   REAL(KIND=RKIND) OnsitePot
   COMPLEX(KIND=CKIND) new, PsiLeft, PsiRight
 
-  PRINT*,"TMMultNNN()"
+  !PRINT*,"TMMultNNN()"
 
   ! create the new onsite matrix 
   DO iSite=1,M

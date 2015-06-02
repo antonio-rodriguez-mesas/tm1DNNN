@@ -655,6 +655,7 @@ tmm_loop:&
      !--------------------------------------------------------------
 
      DEALLOCATE(PsiA,PsiB,nGamma,gamma,gamma2,acc_variance)
+     DEALLOCATE(HopMatiLR,HopMatiL,EMat,dummyMat,OnsitePotVec)
 
      ! --------------------------------------------------
      ! get time at the end of the process
