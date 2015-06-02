@@ -37,16 +37,18 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   INTEGER Ilayer,           &! current # TM multiplications
        M                     ! strip width
   
-  REAL(KIND=RKIND)  Dis,&! diagonal disorder
+  REAL(KIND=RKIND)  Dis,    &! diagonal disorder
        En                    ! energy
   
   COMPLEX(KIND=CKIND) PSI_A(M,M), PSI_B(M,M)
-  COMPLEX(KIND=CKIND) HopMatiLR(M,M),HopMatiL(M,M), EMat(M,M), dummyMat(M,M)
-  COMPLEX(KIND=CKIND) OnsitePotVec(M)
+  REAL(KIND=RKIND) HopMatiLR(M,M),HopMatiL(M,M), EMat(M,M),dummyMat(M,M)
+  REAL(KIND=RKIND) OnsitePotVec(M)
   
   INTEGER iSite, jState
   REAL(KIND=RKIND) OnsitePot
   COMPLEX(KIND=CKIND) new, PsiLeft, PsiRight
+
+  PRINT*,"TMMultNNN()"
 
   ! create the new onsite matrix 
   DO iSite=1,M

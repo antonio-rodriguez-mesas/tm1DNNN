@@ -81,8 +81,12 @@ PROGRAM TM1DNNN
   REAL(KIND=RKIND) flux, flux0,flux1,dflux
   REAL(KIND=RKIND) KappaA, KappaB, sum
 
-  !REAL(KIND=RKIND), DIMENSION(:), ALLOCATABLE ::             &
-  !nGamma, gamma, gamma2, acc_variance
+  REAL(KIND=RKIND), DIMENSION(:), ALLOCATABLE ::             &
+       !nGamma, gamma, gamma2, acc_variance,
+       OnsitePotVec
+
+  REAL(KIND=RKIND), DIMENSION(:,:), ALLOCATABLE ::             &
+       HopMatiLR, HopMatiL, EMat, dummyMat
 
   !COMPLEX(KIND=CKIND), DIMENSION(:,:), ALLOCATABLE :: PsiA, PsiB
 
@@ -236,6 +240,12 @@ PROGRAM TM1DNNN
      ALLOCATE(gamma(IRange), STAT = IErr)
      ALLOCATE(gamma2(IRange), STAT = IErr)
      ALLOCATE(acc_variance(IRange), STAT = IErr)
+
+     ALLOCATE(HopMatiLR(IRange,IRange), STAT = IErr)
+     ALLOCATE(HopMatiL(IRange,IRange), STAT = IErr)
+     ALLOCATE(EMat(IRange,IRange), STAT = IErr)
+     ALLOCATE(dummyMat(IRange,IRange), STAT = IErr)
+     ALLOCATE(OnsitePotVec(IRange), STAT = IErr)
      
      !PRINT*, "DBG: IErr=", IErr
      IF( IErr.NE.0 ) THEN
@@ -324,9 +334,9 @@ flux_loop: &
            !reset the gamma sum approximants for a SINGLE
            !configuration
            DO iG=1,IRange
-              gamma(iG)          = 0.0D0
-              gamma2(iG)         = 0.0D0
-              acc_variance(iG)   = 0.0D0            
+              gamma(iG)          = ZERO
+              gamma2(iG)         = ZERO
+              acc_variance(iG)   = ZERO            
            ENDDO
 
            DO index=1,IRange
@@ -339,6 +349,47 @@ flux_loop: &
            !initialize the RNG
            CALL SETVALUES(ISeed)
         ENDIF
+
+        !--------------------------------------------------------------
+        ! initialize the connectivity and energy matrices
+        !--------------------------------------------------------------
+
+        HopMatiL=ZERO
+        HopMatiLR=ZERO
+
+        DO index=1,IRange
+           DO jndex=1,IRange
+              IF( index .LE. jndex) THEN
+                 HopMatiL(index,jndex)= REAL(IRange - jndex + index,RKIND)
+              ENDIF
+
+              IF( index .GE. jndex) THEN
+                 HopMatiLR(index,jndex)= -REAL(IRange - index + jndex,RKIND)
+              ENDIF
+
+              ! only off-diagonal elements of EMat
+              IF( index .NE. jndex) THEN
+                 EMat(index,jndex)= REAL(-ABS(index-jndex),RKIND)
+              ENDIF
+           ENDDO
+        ENDDO
+
+!!$        PRINT*,"HopMatL=", HopMatiL
+!!$        PRINT*,"HopMatR=", HopMatiLR
+!!$        PRINT*,"EMat=", EMat
+!!$        PAUSE
+
+        CALL INVERT(IRange,HopMatiL,dummyMat,IErr)
+        IF( IErr.NE.0) THEN
+           PRINT*,"main(): IErr=", IErr," in INVERT() --- aborting!"
+           STOP
+        ENDIF
+        HopMatiL= dummyMat
+
+        HopMatiLR= MATMUL(HopMatiL,HopMatiLR)
+
+!!$        PRINT*,"HopMatiL=", HopMatiL
+!!$        PRINT*,"HopMatiLR=", HopMatiLR
 
         !--------------------------------------------------------------
         ! iteration loop
@@ -354,10 +405,12 @@ tmm_loop:&
               
               ! do the TM multiplication             
               CALL TMMultNNN( PsiA, PsiB, Ilayer, &
-                   Energy, DiagDis, KappaA, KappaB, IRange) 
+                   HopMatiLR, HopMatiL, EMat, dummyMat, OnsitePotVec, &
+                   Energy, DiagDis, IRange) 
 
               CALL TMMultNNN( PsiB, PsiA, Ilayer+1, &
-                   Energy, DiagDis, KappaB, KappaA, IRange)  
+                   HopMatiLR, HopMatiL, EMat, dummyMat, OnsitePotVec, &
+                   Energy, DiagDis, IRange)  
 
               !CALL Swap( PsiA, PsiB, IRange)
 

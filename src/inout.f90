@@ -346,7 +346,7 @@ SUBROUTINE SaveCurrent(IErr)
   IErr=0
   IOne=1
   
-  OPEN(UNIT= IChInp, ERR= 10, STATUS= 'REPLACE', FILE= 'tmseGR.inp')
+  OPEN(UNIT= IChInp, ERR= 10, STATUS= 'REPLACE', FILE= 'tm1dNNN.inp')
 
      WRITE(IChInp,202,ERR=20) ISeed
 202  FORMAT("ISeed        = ", I15.1)
@@ -414,9 +414,6 @@ SUBROUTINE SaveCurrent(IErr)
      WRITE(IChInp,224,ERR=20) Kappa
 224  FORMAT("Kappa        = ", F18.9)
 
-     WRITE(IChInp,225,ERR=20) MagFlux
-225  FORMAT("MagFlux      = ", F18.9)
-     
      WRITE(IChInp,226,ERR=20) Epsilon
 226  FORMAT("Epsilon      = ", F18.9)
      
@@ -1042,7 +1039,7 @@ SUBROUTINE LoadLoopParams(IErr)
         IErr=0
         ICh=IChLoadLP
 
-        OPEN(UNIT= ICh, ERR=10, FILE= "tmseGR.tmp", STATUS= 'OLD')
+        OPEN(UNIT= ICh, ERR=10, FILE= "tm1dNNN.tmp", STATUS= 'OLD')
         READ(ICh,*,ERR=20) index1,PsiB,PsiA,gamma,gamma2,&
            acc_variance,nGamma,z1,z2,z3,z4
         CLOSE(UNIT= ICh, ERR=30)
@@ -1091,7 +1088,7 @@ SUBROUTINE SaveLoopParams(IErr)
         IErr=0
         ICh=IChSaveLP
 
-        OPEN(UNIT= ICh, ERR=10, FILE= "tmseGR.tmp", STATUS= "REPLACE")
+        OPEN(UNIT= ICh, ERR=10, FILE= "tm1dNNN.tmp", STATUS= "REPLACE")
         WRITE(ICh,*,ERR=20) Iter1,PsiB,PsiA,gamma,gamma2,&
            acc_variance,nGamma,z1,z2,z3,z4
         CLOSE(UNIT= ICh, ERR=30)
@@ -1198,7 +1195,7 @@ SUBROUTINE RestartRoutineZZENEHW(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
@@ -1309,7 +1306,7 @@ SUBROUTINE RestartRoutineZZENEPBC(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
@@ -1420,7 +1417,7 @@ SUBROUTINE RestartRoutineACENEHW(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
@@ -1531,7 +1528,7 @@ SUBROUTINE RestartRoutineACENEPBC(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
@@ -1642,7 +1639,7 @@ SUBROUTINE RestartRoutineZZDISHW(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
@@ -1753,7 +1750,7 @@ SUBROUTINE RestartRoutineZZDISPBC(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
@@ -1864,7 +1861,7 @@ SUBROUTINE RestartRoutineACDISHW(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
@@ -1975,7 +1972,7 @@ SUBROUTINE RestartRoutineACDISPBC(IErr)
   WRITE(ICh,*,ERR=20) "cd /gpfs/ccspam/RUNS/", trim(adjustl(Jobname))
   WRITE(ICh,*,ERR=20) 
   WRITE(ICh,*,ERR=20) "sleep 40"
-  WRITE(ICh,*,ERR=20) "./tmseGR.PG  <tmseGR.inp>> ", trim(adjustl(OutJobname))
+  WRITE(ICh,*,ERR=20) "./tm1dNNN.PG  <tm1dNNN.inp>> ", trim(adjustl(OutJobname))
   WRITE(ICh,*,ERR=20)
   WRITE(ICh,*,ERR=20) "cp *.raw /gpfs/ccspam/Projects/GrapheneTMM/", trim(adjustl(Jobname))
 
