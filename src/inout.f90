@@ -88,16 +88,16 @@ SUBROUTINE Input( IErr )
   !PRINT*,"IFluxFlag    = ", IFluxFlag
 
   ILine= ILine+1
-  READ(IChInp,10,ERR=20,END=30) Range0
-  !PRINT*,"Range0       = ",Range0
+  READ(IChInp,10,ERR=20,END=30) IRange0
+  !PRINT*,"IRange0       = ",IRange0
   
   ILine= ILine+1
-  READ(IChInp,10,ERR=20,END=30) Range1
-  !PRINT*,"Range1       = ", Range1
+  READ(IChInp,10,ERR=20,END=30) IRange1
+  !PRINT*,"IRange1       = ", IRange1
   
   ILine= ILine+1
-  READ(IChInp,10,ERR=20,END=30) dRange
-  !PRINT*,"dRange       = ", dRange
+  READ(IChInp,10,ERR=20,END=30) dIRange
+  !PRINT*,"dIRange       = ", dIRange
   
   ILine= ILine+1
   READ(IChInp,15,ERR=20,END=30) DiagDis0
@@ -172,23 +172,23 @@ SUBROUTINE Input( IErr )
      IErr= 1
   ENDIF
   
-  IF( Range0.LE.0 ) THEN
-     PRINT*,"Input(): Range0 <= 0"
+  IF( IRange0.LE.0 ) THEN
+     PRINT*,"Input(): IRange0 <= 0"
      IErr= 1
   ENDIF
   
-  IF( Range0.GT.MAXRange ) THEN
-     PRINT*,"Input(): Range0 > MAXRange (=",MAXRange,")"
+  IF( IRange0.GT.MAXRange ) THEN
+     PRINT*,"Input(): IRange0 > MAXRange (=",MAXRange,")"
      IErr= 1
   ENDIF
   
-  IF( Range1.GT.MAXRange ) THEN
-     PRINT*,"Input(): Range1 > MAXRange (=",MAXRange,")"
+  IF( IRange1.GT.MAXRange ) THEN
+     PRINT*,"Input(): IRange1 > MAXRange (=",MAXRange,")"
      IErr= 1
   ENDIF
   
-  IF( (Range0.GT.Range1) .AND. (dRange.GT.0) ) THEN
-     PRINT*,"Input(): Range0 > Range1 and dRange>0"
+  IF( (IRange0.GT.IRange1) .AND. (dIRange.GT.0) ) THEN
+     PRINT*,"Input(): IRange0 > IRange1 and dIRange>0"
      IErr= 1
   ENDIF
 
@@ -292,9 +292,9 @@ SUBROUTINE Input( IErr )
   PRINT*,"ISortFlag     = 0          ; (10) 0/1 = no/yes ReSort()"
   PRINT*,"IFluxFlag     = 1          ; (11) 0/1 = DiagDis/Energy loop"
   
-  PRINT*,"Range0        = 0          ; (13) minimal width"
-  PRINT*,"Range1        = 0          ; (14) maximal width"
-  PRINT*,"dRange        = 0          ; (15) width increment"
+  PRINT*,"IRange0        = 0          ; (13) minimal width"
+  PRINT*,"IRange1        = 0          ; (14) maximal width"
+  PRINT*,"dIRange        = 0          ; (15) width increment"
   
   PRINT*,"DiagDis0      = 0.         ; (16) minimal diagonal disorder"
   PRINT*,"DiagDis1      = 5.         ; (17) maximal  diagonal disorder"
@@ -381,14 +381,14 @@ SUBROUTINE SaveCurrent(IErr)
      WRITE(IChInp,212,ERR=20) IFluxFlag
 212  FORMAT("IFluxFlag    = ", I15.1)
 
-     WRITE(IChInp,214,ERR=20) Range0
-214  FORMAT("Range0       = ", I15.1)
+     WRITE(IChInp,214,ERR=20) IRange0
+214  FORMAT("IRange0       = ", I15.1)
      
-     WRITE(IChInp,215,ERR=20) Range1
-215  FORMAT("Range1       = ", I15.1)
+     WRITE(IChInp,215,ERR=20) IRange1
+215  FORMAT("IRange1       = ", I15.1)
      
-     WRITE(IChInp,216,ERR=20) dRange
-216  FORMAT("dRange       = ", I15.1)
+     WRITE(IChInp,216,ERR=20) dIRange
+216  FORMAT("dIRange       = ", I15.1)
      
      WRITE(IChInp,217,ERR=20) DiagDis
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -399,7 +399,7 @@ SUBROUTINE SaveCurrent(IErr)
      WRITE(IChInp,219,ERR=20) dDiagDis
 219  FORMAT("dDiagDis     = ", F18.9)
      
-     WRITE(IChInp,220,ERR=20) Energy
+     WRITE(IChInp,220,ERR=20) Energy0
 220  FORMAT("Energy0      = ", F18.9)
      
      WRITE(IChInp,221,ERR=20) Energy1
@@ -584,14 +584,14 @@ SUBROUTINE OpenOutputAvg( IErr )
      WRITE(IChOut,212,ERR=20) IFluxFlag
 212  FORMAT("IFluxFlag    = ", I15.1)
 
-     WRITE(IChOut,214,ERR=20) Range0
-214  FORMAT("Range0       = ", I15.1)
+     WRITE(IChOut,214,ERR=20) IRange0
+214  FORMAT("IRange0       = ", I15.1)
      
-     WRITE(IChOut,215,ERR=20) Range1
-215  FORMAT("Range1       = ", I15.1)
+     WRITE(IChOut,215,ERR=20) IRange1
+215  FORMAT("IRange1       = ", I15.1)
      
-     WRITE(IChOut,216,ERR=20) dRange
-216  FORMAT("dRange       = ", I15.1)
+     WRITE(IChOut,216,ERR=20) dIRange
+216  FORMAT("dIRange       = ", I15.1)
      
      WRITE(IChOut,217,ERR=20) DiagDis0
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -716,9 +716,9 @@ END SUBROUTINE ReOpenOutputAvg
 !---------------------------------------------------------------------
 
 SUBROUTINE WriteOutputAvg(&
-     IRange, 	&
-     DiagDis, 	&
-     Energy,	&
+     M, 	&
+     Dis, 	&
+     En,	&
      gam, var, NOfL,  &
      psi,	&
      IErr, TMM_CONVERGED)
@@ -733,9 +733,9 @@ SUBROUTINE WriteOutputAvg(&
   
   USE IChannels
   
-  INTEGER IRange, NOfL, IErr, TMM_CONVERGED
-  REAL(KIND=RKIND) DiagDis, Energy,&
-       psi(IRange,IRange)
+  INTEGER M, NOfL, IErr, TMM_CONVERGED
+  REAL(KIND=RKIND) Dis, En,&
+       psi(M,M)
   
   REAL(KIND=RKIND) gam(NOfL), var(NOfL)
   
@@ -751,8 +751,8 @@ SUBROUTINE WriteOutputAvg(&
      
      WRITE(IChOut,410,ERR=10) &
           iL, &
-          DiagDis, &
-          Energy, &
+          Dis, &
+          En, &
           gam(iL), var(iL), &
           TMM_CONVERGED
      
@@ -783,7 +783,7 @@ END SUBROUTINE WriteOutputAvg
 !---------------------------------------------------------------------
 
 SUBROUTINE WriteOutputPsi(&
-     Ilayer, IRange,	&
+     Ilayer, M,	&
      psi,	&
      IErr)
         
@@ -797,8 +797,8 @@ SUBROUTINE WriteOutputPsi(&
   
   USE IChannels
   
-  INTEGER Ilayer, IErr, IRange
-  COMPLEX(KIND=CKIND) psi(IRange,IRange)
+  INTEGER Ilayer, IErr, M
+  COMPLEX(KIND=CKIND) psi(M,M)
   
   INTEGER jState, iSite
 
@@ -808,9 +808,9 @@ SUBROUTINE WriteOutputPsi(&
         
         DO jState= 1, 1
            
-           DO iSite= 1, IRange
+           DO iSite= 1, M
               WRITE(IChOutPsi,550,ERR=10) Ilayer, iSite,&
-                   psi(IRange+1-jState,iSite)**2
+                   psi(M+1-jState,iSite)**2
 550           FORMAT( I9.1, " ", I4.1, " ", 1(F25.15), " ", 1(F25.15) )
            ENDDO
               
@@ -872,8 +872,8 @@ END SUBROUTINE CloseOutputAvg
 !	IErr	error code
 !-------------------------------------------------------------------
 
-SUBROUTINE OpenOutputGamma( IRange, &
-           DiagDis, Energy,  &
+SUBROUTINE OpenOutputGamma( M, &
+           Dis, En,  &
            IErr )
 
    USE MyNumbers
@@ -886,8 +886,8 @@ SUBROUTINE OpenOutputGamma( IRange, &
 
 	USE IChannels
 
-   INTEGER IRange, IErr
-   REAL(KIND=RKIND) DiagDis, Energy
+   INTEGER M, IErr
+   REAL(KIND=RKIND) Dis, En
 	
 	INTEGER ICh
 
@@ -901,12 +901,12 @@ SUBROUTINE OpenOutputGamma( IRange, &
 
 !	the filename is different for this gamma logging
 
-   IF( Energy.GE.-1.0D-10 ) THEN
+   IF( En.GE.-1.0D-10 ) THEN
 
 		WRITE(CNameP, 100)                        &
-            IRange,".",									&
-            NINT(100.0D0*ABS(DiagDis)),".",		&
-            NINT(100.0D0*ABS(Energy))
+            M,".",									&
+            NINT(100.0D0*ABS(Dis)),".",		&
+            NINT(100.0D0*ABS(En))
 100	FORMAT(I4.4,A1,I4.4,A1,I4.4)
 
 		OPEN(UNIT= ICh, ERR= 10, STATUS= 'UNKNOWN', &
@@ -914,9 +914,9 @@ SUBROUTINE OpenOutputGamma( IRange, &
 	ELSE
 
 		WRITE(CNameM, 200)                         &
-		      IRange,".",			 &
-		      NINT(100.0D0*ABS(DiagDis)),".-",		 &
-		      NINT(100.0D0*ABS(Energy))
+		      M,".",			 &
+		      NINT(100.0D0*ABS(Dis)),".-",		 &
+		      NINT(100.0D0*ABS(En))
 200	FORMAT(I4.4,A1,I4.4,A2,I4.4) 
 
 		OPEN(UNIT= ICh, ERR= 10, STATUS= 'UNKNOWN', &
@@ -1120,7 +1120,6 @@ END SUBROUTINE SaveLoopParams
 
 SUBROUTINE RestartRoutineZZENEHW(IErr)
 
-
    USE MyNumbers
    USE Randoms
    
@@ -1144,7 +1143,7 @@ SUBROUTINE RestartRoutineZZENEHW(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1255,7 +1254,7 @@ SUBROUTINE RestartRoutineZZENEPBC(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1366,7 +1365,7 @@ SUBROUTINE RestartRoutineACENEHW(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1477,7 +1476,7 @@ SUBROUTINE RestartRoutineACENEPBC(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1588,7 +1587,7 @@ SUBROUTINE RestartRoutineZZDISHW(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1699,7 +1698,7 @@ SUBROUTINE RestartRoutineZZDISPBC(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1810,7 +1809,7 @@ SUBROUTINE RestartRoutineACDISHW(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -1921,7 +1920,7 @@ SUBROUTINE RestartRoutineACDISPBC(IErr)
    ICh=IChRes
 
    WRITE(StrWalltime,'(I6)') IWalltime
-   WRITE(StrRange,'(I6)') Range0
+   WRITE(StrRange,'(I6)') IRange0
    WRITE(StrDis,'(F12.5)') DiagDis0
    WRITE(StrEne0,'(F12.5)') Energy0
 
@@ -2006,7 +2005,7 @@ END SUBROUTINE RestartRoutineACDISPBC
 !---------------------------------------------------------------------
 
 SUBROUTINE SaveCurrentParameters( &
-  IRange, flux, IErr)
+  M, flux, IErr)
   
   USE MyNumbers
   
@@ -2018,7 +2017,7 @@ SUBROUTINE SaveCurrentParameters( &
   
   USE IChannels
   
-  INTEGER IRange, IErr
+  INTEGER M, IErr
   REAL(KIND=RKIND) flux
 
   CHARACTER*8 CName
@@ -2032,7 +2031,7 @@ SUBROUTINE SaveCurrentParameters( &
   OPEN(UNIT= IChtmp, ERR= 10, STATUS= 'UNKNOWN',&
        FILE="tmseXd.tmp")
 
-  WRITE(IChtmp,100,ERR=20) IRange, flux
+  WRITE(IChtmp,100,ERR=20) M, flux
 100 FORMAT(I15.1,F18.9)
 
   CLOSE(UNIT= IChtmp, ERR=40)
@@ -2061,7 +2060,7 @@ END SUBROUTINE SaveCurrentParameters
 !----------------------------------------------------------------------
 
 SUBROUTINE ReloadCurrentParameters( &
-  IRange, flux, IErr)
+  M, flux, IErr)
   
   USE MyNumbers
   
@@ -2073,7 +2072,7 @@ SUBROUTINE ReloadCurrentParameters( &
   
   USE IChannels
   
-  INTEGER IRange, IErr
+  INTEGER M, IErr
   REAL(KIND=RKIND) flux
 
   CHARACTER*8 CName
@@ -2087,7 +2086,7 @@ SUBROUTINE ReloadCurrentParameters( &
   OPEN(UNIT= IChtmp, ERR= 10, STATUS= 'OLD',&
        FILE="tmseXd.tmp")
 
-  READ(IChtmp,100,ERR=20,END=30) IRange, flux
+  READ(IChtmp,100,ERR=20,END=30) M, flux
 100 FORMAT(I15.1,F18.9)
 
   CLOSE(UNIT= IChtmp, ERR=40)
@@ -2121,7 +2120,7 @@ END SUBROUTINE ReloadCurrentParameters
 !--------------------------------------------------------------------
 
 SUBROUTINE DeleteCurrentParameters( &
-  IRange, IErr)
+  M, IErr)
   
   USE MyNumbers
   
@@ -2133,7 +2132,7 @@ SUBROUTINE DeleteCurrentParameters( &
   
   USE IChannels
   
-  INTEGER IRange, IErr
+  INTEGER M, IErr
 
   ! PRINT*,"DBG: ReOpenOutputAvg()"
 
@@ -2164,8 +2163,8 @@ END SUBROUTINE DeleteCurrentParameters
 !--------------------------------------------------------------------
 
 SUBROUTINE WriteOutputAvgRHO(  		&
-     IChannelOut, IRange, IChannelMax,	&
-     DiagDis, Energy,			&
+     IChannelOut, M, IChannelMax,	&
+     Dis, En,			&
      rhoMat, NOfL, NSamples,		&
      IErr )
   
@@ -2179,10 +2178,10 @@ SUBROUTINE WriteOutputAvgRHO(  		&
 	
    USE IChannels
 
-   INTEGER IRange, IChannelOut, IChannelMax, NOfL, NSamples, IErr
-   REAL(KIND=RKIND) DiagDis, Energy
+   INTEGER M, IChannelOut, IChannelMax, NOfL, NSamples, IErr
+   REAL(KIND=RKIND) Dis, En
 
-   REAL(KIND=RKIND) rhoMat(IRange,0:IChannelMax) 
+   REAL(KIND=RKIND) rhoMat(M,0:IChannelMax) 
 
    INTEGER iState, jChannel, iL
 
@@ -2193,11 +2192,11 @@ SUBROUTINE WriteOutputAvgRHO(  		&
 !	average Lyapunov exponent Gamma
 
    DO jChannel=0,IChannelMax
-       DO iState= 1,IRange
+       DO iState= 1,M
 
 		   WRITE(IChannelOut,410,ERR=10) &
                 jChannel, iState, &
-                DiagDis, Energy,	&
+                Dis, En,	&
                 rhoMat(iState,jChannel)/REAL(NSamples)
 
 410	   FORMAT(" ", I7.1, " ", I7.1, &
@@ -2222,8 +2221,8 @@ END SUBROUTINE WriteOutputAvgRHO
 !--------------------------------------------------------------------
 
 SUBROUTINE WriteOutputAvgRHOX(  	&
-     IChannelOut, IRange, IChannelMax,	&
-     DiagDis, Energy,			&
+     IChannelOut, M, IChannelMax,	&
+     Dis, En,			&
      rhoMat, NOfL, NSamples,		&
      IErr )
   
@@ -2237,8 +2236,8 @@ SUBROUTINE WriteOutputAvgRHOX(  	&
   
   USE IChannels
   
-  INTEGER IRange, IChannelOut, IChannelMax, NOfL, NSamples, IErr
-  REAL(KIND=RKIND) DiagDis, Energy
+  INTEGER M, IChannelOut, IChannelMax, NOfL, NSamples, IErr
+  REAL(KIND=RKIND) Dis, En
   
   REAL(KIND=RKIND) rhoMat(0:IChannelMax,0:IChannelMax) 
   
@@ -2255,7 +2254,7 @@ SUBROUTINE WriteOutputAvgRHOX(  	&
         
         WRITE(IChannelOut,410,ERR=10) &
              iChannel, jChannel, &
-             DiagDis, Energy,	&
+             Dis, En,	&
              rhoMat(iChannel,jChannel)/REAL(NSamples)
         
 410     FORMAT(" ", I7.1, " ", I7.1, &
@@ -2280,8 +2279,8 @@ END SUBROUTINE WriteOutputAvgRHOX
 !	IErr	error code
 !-------------------------------------------------------------------
 
-SUBROUTINE OpenOutputRHO( IRange, &
-           DiagDis, Energy,  &
+SUBROUTINE OpenOutputRHO( M, &
+           Dis, En,  &
            IErr )
 
   USE MyNumbers
@@ -2294,8 +2293,8 @@ SUBROUTINE OpenOutputRHO( IRange, &
   
   USE IChannels
   
-  INTEGER IRange, IErr
-  REAL(KIND=RKIND) DiagDis, Energy
+  INTEGER M, IErr
+  REAL(KIND=RKIND) Dis, En
   
   INTEGER ICh
   
@@ -2309,12 +2308,12 @@ SUBROUTINE OpenOutputRHO( IRange, &
   
   !	the filename is different for this RHO logging
   
-  IF( Energy.GE.-1.0D-10 ) THEN
+  IF( En.GE.-1.0D-10 ) THEN
      
      WRITE(CNameP, 100) &
-          IRange,".",	&
-          NINT(100.0D0*ABS(DiagDis)),".", &
-          NINT(100.0D0*ABS(Energy)),".rho"
+          M,".",	&
+          NINT(100.0D0*ABS(Dis)),".", &
+          NINT(100.0D0*ABS(En)),".rho"
 100  FORMAT(I4.4,A1,I4.4,A1,I4.4,A4)
      
      OPEN(UNIT= ICh, ERR= 10, STATUS= 'UNKNOWN', &
@@ -2322,9 +2321,9 @@ SUBROUTINE OpenOutputRHO( IRange, &
   ELSE
      
      WRITE(CNameM, 200) &
-          IRange,".",	&
-          NINT(100.0D0*ABS(DiagDis)),".-", &
-          NINT(100.0D0*ABS(Energy)),".rho"
+          M,".",	&
+          NINT(100.0D0*ABS(Dis)),".-", &
+          NINT(100.0D0*ABS(En)),".rho"
 200  FORMAT(I4.4,A1,I4.4,A2,I4.4,A4) 
      
      OPEN(UNIT= ICh, ERR= 10, STATUS= 'UNKNOWN', &
@@ -2348,8 +2347,8 @@ END SUBROUTINE OpenOutputRHO
 !-------------------------------------------------------------------
 
 SUBROUTINE WriteOutputRHO(  &
-     IChannelOut, IRange, IChannelMax,	&
-     DiagDis, Energy,	&
+     IChannelOut, M, IChannelMax,	&
+     Dis, En,	&
      rhoMat, NOfL, NSamples,	&
      IErr )
   
@@ -2363,10 +2362,10 @@ SUBROUTINE WriteOutputRHO(  &
   
   USE IChannels
   
-  INTEGER IRange, IChannelOut, IChannelMax, NOfL, NSamples, IErr
-  REAL(KIND=RKIND) DiagDis, Energy
+  INTEGER M, IChannelOut, IChannelMax, NOfL, NSamples, IErr
+  REAL(KIND=RKIND) Dis, En
   
-  REAL(KIND=RKIND) rhoMat(IRange,0:IChannelMax) 
+  REAL(KIND=RKIND) rhoMat(M,0:IChannelMax) 
   
   INTEGER iState, jChannel, iL
   
@@ -2377,11 +2376,11 @@ SUBROUTINE WriteOutputRHO(  &
   !	average Lyapunov exponent Gamma
   
   DO jChannel=0,IChannelMax
-     DO iState= 1,IRange
+     DO iState= 1,M
         
         WRITE(IChannelOut,410,ERR=10) &
              NSamples,jChannel, iState, &
-             DiagDis, Energy,	&
+             Dis, En,	&
              rhoMat(iState,jChannel)/REAL(NSamples)
         
 410     FORMAT(" ", I7.1, " ", I7.1, " ", I7.1, &
@@ -2443,9 +2442,9 @@ END SUBROUTINE CloseOutputRHO
 !---------------------------------------------------------------------
 
 SUBROUTINE WriteOutputHAV(&
-     IRange, 	&
-     DiagDis, 	&
-     Energy,	&
+     M, 	&
+     Dis, 	&
+     En,	&
      gam, NOfL,  &
      sumhavg,	&
      IErr )
@@ -2460,8 +2459,8 @@ SUBROUTINE WriteOutputHAV(&
   
   USE IChannels
   
-  INTEGER IRange, NOfL, IErr
-  REAL(KIND=RKIND) DiagDis, Energy
+  INTEGER M, NOfL, IErr
+  REAL(KIND=RKIND) Dis, En
   REAL(KIND=RKIND) gam(NOfL), sumhavg
 
   REAL(KIND=RKIND) sumgam
@@ -2481,8 +2480,8 @@ SUBROUTINE WriteOutputHAV(&
 
   WRITE(IChOutHAV,410,ERR=10) &
      NOfL, &
-     DiagDis, &
-     Energy, &
+     Dis, &
+     En, &
      sumgam, sumhavg
      
 410 FORMAT(I7.1, &
@@ -2505,7 +2504,7 @@ END SUBROUTINE WriteOutputHAV
 !	IErr	error code
 !-------------------------------------------------------------------
 
-SUBROUTINE OutputEVals( ILayer, IRange, IElements, Disorder,Energy, EVals, Csur, IErr )
+SUBROUTINE OutputEVals( ILayer, M, IElements, Disorder,En, EVals, Csur, IErr )
   
   USE MyNumbers
   
@@ -2517,10 +2516,10 @@ SUBROUTINE OutputEVals( ILayer, IRange, IElements, Disorder,Energy, EVals, Csur,
   
   USE IChannels
   
-  INTEGER ILayer, IRange, IElements, iState, IErr
-  REAL(KIND=RKIND) Disorder, Energy
+  INTEGER ILayer, M, IElements, iState, IErr
+  REAL(KIND=RKIND) Disorder, En
   CHARACTER*4 Csur
-  COMPLEX(KIND=CKIND) EVals(IRange)
+  COMPLEX(KIND=CKIND) EVals(M)
   !EXTERNAL ARG
 
   CHARACTER*38 CNameP
@@ -2539,13 +2538,13 @@ SUBROUTINE OutputEVals( ILayer, IRange, IElements, Disorder,Energy, EVals, Csur,
      WRITE(Cpre, '(A1)') "-"
   !ENDIF
    
-  IF( Energy.GE.-1.0D-10 ) THEN
+  IF( En.GE.-1.0D-10 ) THEN
      
      WRITE(CNameP, '(I4.4,A1,I6.6,A1,I6.6,A1,I6.6,A1,I5.5,A4)') &
-          IRange,".", &
+          M,".", &
           ISeed, ".", &
           NINT(10000.0D0*ABS(Disorder)),".",		&
-          NINT(10000.0D0*ABS(Energy)),".",ILayer/(NOfPrint*NOfOrtho),Csur
+          NINT(10000.0D0*ABS(En)),".",ILayer/(NOfPrint*NOfOrtho),Csur
      
      !PRINT*,CNameP
 
@@ -2554,10 +2553,10 @@ SUBROUTINE OutputEVals( ILayer, IRange, IElements, Disorder,Energy, EVals, Csur,
   ELSE
      
      WRITE(CNameM, '(I4.4,A1,I6.6,A1,I6.6,A2,I6.6,A1,I5.5,A4) ') &
-          IRange,".", &
+          M,".", &
           ISeed, ".", &
           NINT(10000.0D0*ABS(Disorder)),".-",		 &
-          NINT(10000.0D0*ABS(Energy)),".",ILayer/(NOfPrint*NOfOrtho),Csur
+          NINT(10000.0D0*ABS(En)),".",ILayer/(NOfPrint*NOfOrtho),Csur
      
      !PRINT*,CNameM
 
