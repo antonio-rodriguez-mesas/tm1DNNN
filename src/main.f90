@@ -66,6 +66,8 @@ PROGRAM TM1DNNN
   USE Extensions
   USE Gammas
 
+  USE Models
+
   USE RNG
 
   !--------------------------------------------------------------------
@@ -260,6 +262,13 @@ PROGRAM TM1DNNN
 flux_loop: &
      DO flux= flux0,flux1,dflux
 
+        !--------------------------------------------------------------------
+        ! timing startup
+        !--------------------------------------------------------------------
+
+        CALL SYSTEM_CLOCK(count_rate=IRate)
+        CALL SYSTEM_CLOCK(IStarttime)
+
         !--------------------------------------------------------------
         ! set values for the physical quantities
         !--------------------------------------------------------------
@@ -299,7 +308,7 @@ flux_loop: &
         !--------------------------------------------------------------
 
 2600    WRITE(*,2610) IRange, DiagDis, Energy, Kappa
-2610    FORMAT("START @ IW= ",I4.1,    &
+2610    FORMAT("START @ IR= ",I4.1,    &
              ", DD= ", G10.3,          &
              ", En= ", G10.3,          &
              ", KA= ", G10.3)
@@ -360,16 +369,19 @@ flux_loop: &
         DO index=1,IRange
            DO jndex=1,IRange
               IF( index .LE. jndex) THEN
-                 HopMatiL(index,jndex)= REAL(IRange - jndex + index,RKIND)
+                 HopMatiL(index,jndex)= &
+                 HoppingModel(IModelFlag, IRange - jndex + index)
               ENDIF
 
               IF( index .GE. jndex) THEN
-                 HopMatiLR(index,jndex)= -REAL(IRange - index + jndex,RKIND)
+                 HopMatiLR(index,jndex)= &
+                      -HoppingModel(IModelFlag, IRange - jndex + index)
               ENDIF
 
               ! only off-diagonal elements of EMat
               IF( index .NE. jndex) THEN
-                 EMat(index,jndex)= REAL(-ABS(index-jndex),RKIND)
+                 EMat(index,jndex)= &
+                      -HoppingModel(IModelFlag,ABS(index-jndex))
               ENDIF
            ENDDO
         ENDDO
@@ -420,7 +432,8 @@ tmm_loop:&
            ! renormalize via Gram-Schmidt
            !-------------------------------------------------------
 
-           CALL ReNorm(PsiA,PsiB,gamma,gamma2,IRange)
+           CALL ReNorm(PsiA,PsiB,gamma,gamma2,IRange,NOfOrtho)
+           !CALL ReNormBLAS(PsiA,PsiB,gamma,gamma2,IRange,1,NOfOrtho)
 
            IF(IWriteFlag.GE.MAXWriteFLAG+1) THEN   
               PRINT*,"DBG: Orth,iL,PsiA", iLayer, PsiA
@@ -578,6 +591,9 @@ tmm_loop:&
            PRINT*,"main: No convergence in TMM_loop!"
         ENDIF
 
+        !--------------------------------------------------------------
+        ! jump to here if convergence is achieved
+        !--------------------------------------------------------------
 4000    CONTINUE  
 
         !--------------------------------------------------------------
@@ -624,6 +640,20 @@ tmm_loop:&
            EXIT
         ENDIF
 
+        ! --------------------------------------------------
+        ! get time at the end of the flux process
+        ! --------------------------------------------------
+        
+        CALL SYSTEM_CLOCK(ICurrentTime)
+        Duration=REAL(ICurrentTime-IStartTime)/REAL(IRate)
+        IHours = FLOOR(Duration/3600.0D0)
+        IMinutes = FLOOR(MOD(Duration,3600.0D0)/60.0D0)
+        ISeconds = MOD(Duration,3600.0D0)-IMinutes*60
+        IMilliSeconds = INT((Duration-(IHours*3600+IMinutes*60+ISeconds))*1000,IKIND)
+        
+        PRINT*, "tm1dNNN: used time=", IHours, "hrs ", &
+             IMinutes,"mins ",ISeconds,"secs ", IMilliSeconds,"millisecs"
+
         !--------------------------------------------------------------
         ! end of flux loop
         !--------------------------------------------------------------
@@ -656,20 +686,6 @@ tmm_loop:&
 
      DEALLOCATE(PsiA,PsiB,nGamma,gamma,gamma2,acc_variance)
      DEALLOCATE(HopMatiLR,HopMatiL,EMat,dummyMat,OnsitePotVec)
-
-     ! --------------------------------------------------
-     ! get time at the end of the process
-     ! --------------------------------------------------
-
-     CALL SYSTEM_CLOCK(ICurrentTime)
-     Duration=REAL(ICurrentTime-IStartTime)/REAL(IRate)
-     IHours = FLOOR(Duration/3600.0D0)
-     IMinutes = FLOOR(MOD(Duration,3600.0D0)/60.0D0)
-     ISeconds = MOD(Duration,3600.0D0)-IMinutes*60
-     IMilliSeconds = INT((Duration-(IHours*3600+IMinutes*60+ISeconds))*1000,IKIND)
-     
-     PRINT*, "tm1dNNN: used time=", IHours, "hrs ", &
-          IMinutes,"mins ",ISeconds,"secs ", IMilliSeconds,"millisecs"
 
      !-----------------------------------------------------------------
      ! end of range loop

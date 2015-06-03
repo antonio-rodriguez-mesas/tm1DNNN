@@ -64,6 +64,10 @@ SUBROUTINE Input( IErr )
   !PRINT*,"NOfGamma     = ", NOfGamma
   
   ILine= ILine+1
+  READ(IChInp,10,ERR=20,END=30) IModelFlag
+  !PRINT*,"IModelFlag   = ", IModelFlag
+  
+  ILine= ILine+1
   READ(IChInp,10,ERR=20,END=30) IBCFlag
   !PRINT*,"IBCFlag      = ", IBCFlag
   
@@ -285,6 +289,7 @@ SUBROUTINE Input( IErr )
   PRINT*,"NOfPrint      = 10         ; (4) # steps until printout"
   PRINT*,"NOfGamma      = 1          ; (5) # smallest Lyapunov exponents"
 
+  PRINT*,"IModelFlag    = 0          ; (6) -1/0/1/2 = "
   PRINT*,"IBCFlag       = 0          ; (6) 0/1/2 = hard wall/periodic/antiperiodic BC"
   PRINT*,"IRNGFlag      = 0          ; (7) 0/1/2 = uniform/rescaled uniform/Gaussian disorder"
   PRINT*,"IKeepFlag     = 0          ; (8) 0/1 = yes/no data overwrite"
@@ -363,6 +368,9 @@ SUBROUTINE SaveCurrent(IErr)
      WRITE(IChInp,206,ERR=20) NOfGamma
 206  FORMAT("NOfGamma     = ", I15.1)
      
+     WRITE(IChInp,207,ERR=20) IModelFlag
+2071 FORMAT("IModelFlag   = ", I15.1)
+     
      WRITE(IChInp,207,ERR=20) IBCFlag
 207  FORMAT("IBCFlag      = ", I15.1)
      
@@ -382,13 +390,13 @@ SUBROUTINE SaveCurrent(IErr)
 212  FORMAT("IFluxFlag    = ", I15.1)
 
      WRITE(IChInp,214,ERR=20) IRange0
-214  FORMAT("IRange0       = ", I15.1)
+214  FORMAT("IRange0      = ", I15.1)
      
      WRITE(IChInp,215,ERR=20) IRange1
-215  FORMAT("IRange1       = ", I15.1)
+215  FORMAT("IRange1      = ", I15.1)
      
      WRITE(IChInp,216,ERR=20) dIRange
-216  FORMAT("dIRange       = ", I15.1)
+216  FORMAT("dIRange      = ", I15.1)
      
      WRITE(IChInp,217,ERR=20) DiagDis
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -467,7 +475,7 @@ SUBROUTINE CheckOutputAvg( IErr )
 
   LOGICAL::LExist
   
-  CHARACTER*23 CName
+  CHARACTER*24 CName
   
   !	PRINT*,"DBG: CheckOutputAvg()"
   
@@ -476,13 +484,13 @@ SUBROUTINE CheckOutputAvg( IErr )
   !   WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IRange,"W-",ISeed,"S-", IModelFlag, "M-Dis.raw"
   ELSE
-     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IRange,"W-",ISeed,"S-", IModelFlag, "M-Ene.raw"
   ENDIF
 
-300  FORMAT(I4.4,A2,I5.5,A9)
-301  FORMAT(I4.4,A2,I5.5,A9)
+300  FORMAT(I4.4,A2,I5.5,A2,I2.2,A9)
+301  FORMAT(I4.4,A2,I5.5,A2,I2.2,A9)
 
   !PRINT*, "flag: Checking AVG"
 
@@ -518,32 +526,34 @@ SUBROUTINE OpenOutputAvg( IErr )
   
   INTEGER IErr
   
-  CHARACTER*23 CName
-  CHARACTER*23 PName
+  CHARACTER*24 CName
+  CHARACTER*24 PName
   
   !PRINT*,"DBG: OpenOutputAvg()"
   
   IErr= 0
 
-   !	WRITE out the input parameter
+  !	WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IRange,"R-",ISeed,"S-", IModelFlag, "M-Dis.raw"
   ELSE
-     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IRange,"R-",ISeed,"S-", IModelFlag, "M-Ene.raw"
   ENDIF
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IRange,"W-",ISeed,"S-Dis.psi"
+     WRITE(PName,300) IRange,"R-",ISeed,"S-", IModelFlag, "M-Dis.psi"
   ELSE
-     WRITE(PName,301) IRange,"W-",ISeed,"S-Ene.psi"
+     WRITE(PName,301) IRange,"R-",ISeed,"S-", IModelFlag, "M-Ene.psi"
   ENDIF
 
-300  FORMAT(I4.4,A2,I5.5,A9)
-301  FORMAT(I4.4,A2,I5.5,A9)
+300  FORMAT(I4.4,A2,I5.5,A2,I2.2,A9)
+301  FORMAT(I4.4,A2,I5.5,A2,I2.2,A9)
+
+  !PRINT*,"Cname=",CName,", PName=",PName,";"
 
      OPEN(UNIT=IChOut, ERR=10, STATUS= 'UNKNOWN', FILE=CName)
-     OPEN(UNIT=IChOutPsi, ERR=10, STATUS= 'UNKNOWN', FILE=PName)
+     OPEN(UNIT=IChOutPsi, ERR=15, STATUS= 'UNKNOWN', FILE=PName)
 
      WRITE(IChOut,201,ERR=20) RStr,DStr,AStr
 201  FORMAT("(* ",3A," *)")
@@ -582,13 +592,13 @@ SUBROUTINE OpenOutputAvg( IErr )
 212  FORMAT("IFluxFlag    = ", I15.1)
 
      WRITE(IChOut,214,ERR=20) IRange0
-214  FORMAT("IRange0       = ", I15.1)
+214  FORMAT("IRange0      = ", I15.1)
      
      WRITE(IChOut,215,ERR=20) IRange1
-215  FORMAT("IRange1       = ", I15.1)
+215  FORMAT("IRange1      = ", I15.1)
      
      WRITE(IChOut,216,ERR=20) dIRange
-216  FORMAT("dIRange       = ", I15.1)
+216  FORMAT("dIRange      = ", I15.1)
      
      WRITE(IChOut,217,ERR=20) DiagDis0
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -635,7 +645,12 @@ SUBROUTINE OpenOutputAvg( IErr )
   RETURN
      
   !	error in OPEN detected
-10 PRINT*,"OpenOutputAvg(): ERR in OPEN()"
+10 PRINT*,"OpenOutputAvg(): ERR in OPEN() for ", CName
+  IErr= 1
+  RETURN
+  
+  !	error in OPEN detected
+15 PRINT*,"OpenOutputAvg(): ERR in OPEN() for ", PName
   IErr= 1
   RETURN
   
@@ -677,19 +692,19 @@ SUBROUTINE ReOpenOutputAvg( IErr )
   ! WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IRange,"R-",ISeed,"S-", IModelFlag, "M-Dis.raw"
   ELSE
-     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IRange,"R-",ISeed,"S-", IModelFlag, "M-Ene.raw"
   ENDIF
 
- IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IRange,"W-",ISeed,"S-Dis.psi"
+  IF (IFluxFlag .EQ. 0) THEN
+     WRITE(PName,300) IRange,"R-",ISeed,"S-", IModelFlag, "M-Dis.psi"
   ELSE
-     WRITE(PName,301) IRange,"W-",ISeed,"S-Ene.psi"
+     WRITE(PName,301) IRange,"R-",ISeed,"S-", IModelFlag, "M-Ene.psi"
   ENDIF
 
-300  FORMAT(I4.4,A2,I5.5,A9)
-301  FORMAT(I4.4,A2,I5.5,A9)
+300  FORMAT(I4.4,A2,I5.5,A2,I2.2,A9)
+301  FORMAT(I4.4,A2,I5.5,A2,I2.2,A9)
 
  !PRINT*, "flag: Re-Opening AVG"
 

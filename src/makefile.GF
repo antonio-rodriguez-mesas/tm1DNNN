@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------
 #
-# tmseGR
+# 
 #
 #-----------------------------------------------------------------
 #
@@ -21,14 +21,15 @@
 F90 = gfortran -std=legacy
 F77 = gfortran -ffixed-form -std=legacy
 
-F90FLAGS = -fbounds-check -fno-range-check -fimplicit-none -fcray-pointer # debug
+#F90FLAGS = -fbounds-check -fimplicit-none -fcray-pointer # debug
 #F90FLAGS = -pg -fbounds-check -fno-range-check -fimplicit-none # profiling
+F90FLAGS = -O3 -fimplicit-none -fexternal-blas # release
 F77FLAGS = -fbounds-check -fno-range-check # debug
 
 LIBDIR = /warwick/mathlib/gnu/x86_64/
 LIBFLAGS  =  -llapack -lblas
 
-OBJFILES = tm1dNNN_modules.o random.o main.o util.o inout.o invert.o
+OBJFILES = tm1dNNN_modules.o models.o random.o main.o util.o inout.o invert.o 
 
 tm1dNNN.GF: $(OBJFILES)
 	$(F90) $(F90FLAGS) -o $@ \
