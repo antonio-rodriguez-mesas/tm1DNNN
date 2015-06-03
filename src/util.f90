@@ -53,6 +53,8 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   ! create the new onsite matrix 
   DO iSite=1,M
      SELECT CASE(IRNGFlag)
+     CASE(-1)
+        EMat(iSite,iSite)= REAL(M-iSite+1,RKIND)
      CASE(0)
         EMat(iSite,iSite)= En - Dis*(DRANDOM()-0.5D0)
      CASE(1)
@@ -61,8 +63,11 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
         !EMat(iSite,iSite)= En - GRANDOM(ISeedDummy,0.0D0,Dis)
      END SELECT
   ENDDO ! iSite
+  !PRINT*,"EMat=", EMat
 
   dummyMat= MATMUL(HopMatiL,EMat)
+  !PRINT*,"HopMatiLE=", dummyMat; PAUSE
+
   dummyMat= MATMUL(dummyMat,PSI_A)
 
   PSI_A= dummyMat + MATMUL(HopMatiLR,PSI_B)
