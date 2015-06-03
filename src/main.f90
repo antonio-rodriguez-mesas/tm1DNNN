@@ -1,7 +1,7 @@
 !********************************************************************
 !
-! TMSEGR - Transfer matrix method for the Anderson
-! model with diagonal disorder in Graphene
+! TM1DNNN - Transfer matrix method for the Anderson model
+! in 1D with finite-range hopping
 !
 !********************************************************************
 
@@ -10,20 +10,6 @@
 ! $Header: /home/cvs/phsht/GrapheneTMM/src/Restart/ALL/mainGR.f90,v 1.1 2011/07/22 17:49:19 ccspam Exp $
 !
 !********************************************************************
-
-!**************************************************************************
-!
-! $Log: mainGR.f90,v $
-! Revision 1.1  2011/07/22 17:49:19  ccspam
-! Programs for ZZ and AC with the restart routine for francesca
-!
-! Revision 1.1  2011/05/31 13:55:07  ccspam
-! *** empty log message ***
-!
-! Revision 1.1  2011/05/06 08:13:09  phsht
-! 1st installement
-
-!**************************************************************************
 
 !********************************************************************
 !
@@ -50,9 +36,6 @@
 !      IFluxFlag       0        DiagDis loop
 !                      1        Energy loop
 !
-!      IEdgeFlag       0        Zigzag or
-!                      1        Armchair edge
-!
 !      Notation:
 !
 !      see B. Kramer and M. Schreiber, "Transfer-Matrix Methods and Finite-
@@ -64,92 +47,98 @@
 !
 !********************************************************************
 
-PROGRAM TMSEGR
+PROGRAM TM1DNNN
 
   !--------------------------------------------------------------------
   ! parameter and global variable definitions
   !--------------------------------------------------------------------
-  
+
   USE MyNumbers
-  
+
   USE CConstants
   USE IConstants
   USE IChannels
-  
+
   USE IPara
   USE DPara
 
   USE Randoms
   USE Extensions
   USE Gammas
-  
+
   USE RNG
-  
+
   !--------------------------------------------------------------------
   ! local variable definitions
   !--------------------------------------------------------------------
-  
+
   IMPLICIT NONE
-  
+
   INTEGER IWidthSquared, IWidthRL, Width0_X, &
        IChannelMax, index,jndex,kndex,lndex, jjndex,kkndex, andex,bndex, &
        Iter2, NOfG,iG, Ilayer
-  
+
   REAL(KIND=RKIND) flux, flux0,flux1,dflux
   REAL(KIND=RKIND) KappaA, KappaB, sum
-  
-  !REAL(KIND=RKIND), DIMENSION(:), ALLOCATABLE ::             &
-       !nGamma, gamma, gamma2, acc_variance
-  
+
+  REAL(KIND=RKIND), DIMENSION(:), ALLOCATABLE ::             &
+       !nGamma, gamma, gamma2, acc_variance,
+       OnsitePotVec
+
+  REAL(KIND=RKIND), DIMENSION(:,:), ALLOCATABLE ::             &
+       HopMatiLR, HopMatiL, EMat, dummyMat
+
   !COMPLEX(KIND=CKIND), DIMENSION(:,:), ALLOCATABLE :: PsiA, PsiB
 
   CHARACTER*40 surname
   CHARACTER*3 EnStr
-  
+
   ! timing variables
-  REAL(4), DIMENSION(1:3,1:1) :: TIME, TIMESUM
-  REAL(4) STARTTIME(2), ENDTIME(2) 
-  REAL(4) T, T2, ETIME
-  
-  EXTERNAL ETIME
-  
+  INTEGER :: IHours,IMinutes,ISeconds,IMilliSeconds, &
+       IStartTime, ICurrentTime ,IRate
+
+  REAL(RKIND) :: Duration, time
+
   !REAL(KIND=RKIND) dummy, dummyB
   INTEGER IErr
 
-   !General Parameters
+  !General Parameters
   LOGICAL :: LExist
   INTEGER(KIND=IKIND) :: TMM_CONVERGED
   REAL(KIND=RKIND) :: start, finish, hours
-  
+
   !-------------------------------------------------------------------
   ! constants
   !-------------------------------------------------------------------
 
   CALL Init_Numbers
-  
+
   !--------------------------------------------------------------------
   ! protocal feature startup
   !--------------------------------------------------------------------
-  
-  PRINT*,"TMSEGR ASYMP (double precision)"
-  !      PRINT*,"$Revision: 1.1 $ $Date: 2011/07/22 17:49:19 $ $Author: ccspam $"
+
+  PRINT*,"TM1DNNN ASYMP (double precision)"
   PRINT*,RStr,DStr,AStr
-  !      PRINT*,"$Revision: 1.1 $ $Date: 2011/07/22 17:49:19 $ $Author: ccspam $"
   PRINT*,"--------------------------------------------------------------"
-  
+
   !--------------------------------------------------------------------
   ! DBG mode
   !--------------------------------------------------------------------
-  
+
   !MS$IF DEFINED (DBG)
   !PRINT*,"DBG mode"
   !MS$ENDIF
-  
+
   !--------------------------------------------------------------------
-  ! input handling and timing
+  ! timing startup
   !--------------------------------------------------------------------
-  
-  CALL cpu_time(start)
+
+  CALL SYSTEM_CLOCK(count_rate=IRate)
+  CALL SYSTEM_CLOCK(IStarttime)
+
+  !--------------------------------------------------------------------
+  ! input handling
+  !--------------------------------------------------------------------
 
   CALL Input( IErr )
   !PRINT*, "DBG: IErr=", IErr
@@ -157,14 +146,14 @@ PROGRAM TMSEGR
      PRINT*,"main: error in Input()"
      STOP
   ENDIF
-  
+
   IF (ISortFlag.EQ.1) THEN
      PRINT*,"ReSort() is done after each renormalization !"
      PRINT*,"-------------------------------------------------------"
   ENDIF
 
   IRestart = IRestart - 1
-  
+
   !-----------------------------------------------------------------
   ! choose between square or ZZ
   !-----------------------------------------------------------------
@@ -180,7 +169,7 @@ PROGRAM TMSEGR
   !--------------------------------------------------------------------
   ! select the quantity to be varied
   !--------------------------------------------------------------------
-  
+
   SELECT CASE(IFluxFlag)
   CASE(0)
      PRINT*,"main: Varying Diagonal Disorder" 
@@ -193,37 +182,32 @@ PROGRAM TMSEGR
      flux1     = Energy1
      dflux     = dEnergy
   END SELECT
-   
+
   !--------------------------------------------------------------------
   ! main parameter sweep
   !--------------------------------------------------------------------
-  
-  width_loop: &
-  DO IWidth= Width0,Width1,dWidth
 
-     ! --------------------------------------------------     
-     ! get time at start of the process
-     ! --------------------------------------------------
-     T = ETIME(STARTTIME)
-  
+  range_loop: &
+  DO IRange= IRange0,IRange1,dIRange
+
      !--------------------------------------------------------------
-     ! the # Lyapunov exponents is maximally .EQ. to IWidth
+     ! the # Lyapunov exponents is maximally .EQ. to IRange
      !--------------------------------------------------------------
      
-     NOfG= MIN( NOfGamma, IWidth )
-
-      !--------------------------------------------------------------------
-      ! Set-Up AVG Files
-      !--------------------------------------------------------------------
-  
-      SELECT CASE(IKeepFlag)
-      CASE(0)
+     NOfG= MIN( NOfGamma, IRange )
+     
+     !--------------------------------------------------------------------
+     ! Set-Up AVG Files
+     !--------------------------------------------------------------------
+     
+     SELECT CASE(IKeepFlag)
+     CASE(0)
         CALL OpenOutputAvg(IErr)
         IF( IErr.EQ.1 ) THEN
            PRINT*,"main: Error in OpenOutputAvg()"
            STOP
         ENDIF
-      CASE(1)
+     CASE(1)
         CALL CheckOutputAvg(IErr,LExist)
         IF( IErr.EQ.1 ) THEN
            PRINT*,"main: Error in CheckOutputAvg()"
@@ -243,19 +227,25 @@ PROGRAM TMSEGR
               STOP
            ENDIF
         END SELECT
-      END SELECT
+     END SELECT
      
      !--------------------------------------------------------------
      ! allocate the memory for the TMM, gamma and RND vectors
      !--------------------------------------------------------------
      
-        ALLOCATE(PsiA(IWidth,IWidth), STAT = IErr)
-        ALLOCATE(PsiB(IWidth,IWidth), STAT = IErr)
-        
-        ALLOCATE(nGamma(IWidth), STAT = IErr)
-        ALLOCATE(gamma(IWidth), STAT = IErr)
-        ALLOCATE(gamma2(IWidth), STAT = IErr)
-        ALLOCATE(acc_variance(IWidth), STAT = IErr)
+     ALLOCATE(PsiA(IRange,IRange), STAT = IErr)
+     ALLOCATE(PsiB(IRange,IRange), STAT = IErr)
+     
+     ALLOCATE(nGamma(IRange), STAT = IErr)
+     ALLOCATE(gamma(IRange), STAT = IErr)
+     ALLOCATE(gamma2(IRange), STAT = IErr)
+     ALLOCATE(acc_variance(IRange), STAT = IErr)
+
+     ALLOCATE(HopMatiLR(IRange,IRange), STAT = IErr)
+     ALLOCATE(HopMatiL(IRange,IRange), STAT = IErr)
+     ALLOCATE(EMat(IRange,IRange), STAT = IErr)
+     ALLOCATE(dummyMat(IRange,IRange), STAT = IErr)
+     ALLOCATE(OnsitePotVec(IRange), STAT = IErr)
      
      !PRINT*, "DBG: IErr=", IErr
      IF( IErr.NE.0 ) THEN
@@ -273,7 +263,7 @@ flux_loop: &
         !--------------------------------------------------------------
         ! set values for the physical quantities
         !--------------------------------------------------------------
-
+  
         SELECT CASE(IFluxFlag) 
         CASE(0)
            DiagDis = flux
@@ -282,22 +272,22 @@ flux_loop: &
            Energy  = flux
            DiagDis = DiagDis0
         END SELECT
-        
+
         !--------------------------------------------------------------
         ! save the current parameters
         !--------------------------------------------------------------
-        
+
         CALL SaveCurrent(IErr)
         IF(IErr.NE.0) THEN
            PRINT*,"main: ERR in SaveCurrent()"
         ENDIF
-        
+
         !--------------------------------------------------------------
         ! open the nGamma file
         !--------------------------------------------------------------
-        
+
         IF(IWriteFlag.GE.2) THEN
-           CALL OpenOutputGamma( IWidth, DiagDis,Energy, IErr )
+           CALL OpenOutputGamma( IRange, DiagDis,Energy, IErr )
            IF( IErr.NE.0 ) THEN
               PRINT*,"main: error in OpenOutputGamma()"
               STOP
@@ -308,40 +298,22 @@ flux_loop: &
         ! protocoll feature
         !--------------------------------------------------------------
 
-        SELECT CASE (IEdgeFlag)
-
-        CASE(0)
-
-2500    WRITE(*,2510) IWidth, DiagDis, Energy, KappaA, KappaB, MagFlux
-2510    FORMAT("START @ IW= ",I4.1,    &
-             ", DD= ", G10.3,          &
-             ", En= ", G10.3,          &
-             ", KA= ", G10.3,          &
-             ", KB= ", G10.3,          &
-             ", Mf= ", G10.3)
-        
-        CASE(1)
-
-2600    WRITE(*,2610) IWidth, DiagDis, Energy, Kappa, MagFlux
+2600    WRITE(*,2610) IRange, DiagDis, Energy, Kappa
 2610    FORMAT("START @ IW= ",I4.1,    &
              ", DD= ", G10.3,          &
              ", En= ", G10.3,          &
-             ", KA= ", G10.3,          &
-             ", Mf= ", G10.3)
- 
-       END SELECT
-
+             ", KA= ", G10.3)
 
         !--------------------------------------------------------------
         ! Initialize the convergence flags
         !--------------------------------------------------------------
-     
-         TMM_CONVERGED = 0
+
+        TMM_CONVERGED = 0
 
         !--------------------------------------------------------------
         ! initialize the wave vectors, the gamma sums and RNG
         !--------------------------------------------------------------
-        
+
         IF(IMidDump .EQ. 1 .AND. IKeepFlag .EQ. 1) THEN
            CALL LoadLoopParams(IErr)
            IKeepFlag = 0
@@ -349,127 +321,107 @@ flux_loop: &
               PRINT*,"main: error in LoadLoopParams()"
               STOP
            ENDIF
-        
+
         ELSE
 
-          ! start the index
-          index1= 1
+           ! start the index
+           index1= 1
 
-          ! reset the wave vectors
-          PsiA= ZERO
-          PsiB= ZERO      
-        
-          !reset the gamma sum approximants for a SINGLE
-          !configuration
-          DO iG=1,IWidth
-             gamma(iG)          = 0.0D0
-             gamma2(iG)         = 0.0D0
-             acc_variance(iG)   = 0.0D0            
-          ENDDO
-          
-          DO index=1,IWidth
-             PsiA(index,index)= ONE
-          ENDDO
-        
-        !PRINT *, 'DBG: PsiA=', PsiA
-        !PRINT *, 'DBG: PsiB=', PsiB
+           ! reset the wave vectors
+           PsiA= ZERO
+           PsiB= ZERO      
 
-            !initialize the RNG
-            CALL SETVALUES(ISeed)
+           !reset the gamma sum approximants for a SINGLE
+           !configuration
+           DO iG=1,IRange
+              gamma(iG)          = ZERO
+              gamma2(iG)         = ZERO
+              acc_variance(iG)   = ZERO            
+           ENDDO
+
+           DO index=1,IRange
+              PsiA(index,index)= ONE
+           ENDDO
+
+           !PRINT *, 'DBG: PsiA=', PsiA
+           !PRINT *, 'DBG: PsiB=', PsiB
+
+           !initialize the RNG
+           CALL SETVALUES(ISeed)
         ENDIF
-        
+
+        !--------------------------------------------------------------
+        ! initialize the connectivity and energy matrices
+        !--------------------------------------------------------------
+
+        HopMatiL=ZERO
+        HopMatiLR=ZERO
+
+        DO index=1,IRange
+           DO jndex=1,IRange
+              IF( index .LE. jndex) THEN
+                 HopMatiL(index,jndex)= REAL(IRange - jndex + index,RKIND)
+              ENDIF
+
+              IF( index .GE. jndex) THEN
+                 HopMatiLR(index,jndex)= -REAL(IRange - index + jndex,RKIND)
+              ENDIF
+
+              ! only off-diagonal elements of EMat
+              IF( index .NE. jndex) THEN
+                 EMat(index,jndex)= REAL(-ABS(index-jndex),RKIND)
+              ENDIF
+           ENDDO
+        ENDDO
+
+!!$        PRINT*,"HopMatL=", HopMatiL
+!!$        PRINT*,"HopMatR=", HopMatiLR
+!!$        PRINT*,"EMat=", EMat
+!!$        PAUSE
+
+        CALL INVERT(IRange,HopMatiL,dummyMat,IErr)
+        IF( IErr.NE.0) THEN
+           PRINT*,"main(): IErr=", IErr," in INVERT() --- aborting!"
+           STOP
+        ENDIF
+        HopMatiL= dummyMat
+
+        HopMatiLR= MATMUL(HopMatiL,HopMatiLR)
+
+!!$        PRINT*,"HopMatiL=", HopMatiL
+!!$        PRINT*,"HopMatiLR=", HopMatiLR
+
         !--------------------------------------------------------------
         ! iteration loop
         !--------------------------------------------------------------
-        
-tmm_loop: &
+
+tmm_loop:&
         DO Iter1= index1, MAX( (NOfIter)/(NOfOrtho), 1)
 
-           SELECT CASE (IEdgeFlag)
-
-           CASE(0) !ZigZag
-
            DO Iter2= 1, NOfOrtho, 2
-
+   
               ! Ilayer is the current horizontal position
               Ilayer= (Iter1-1)*NOfOrtho+Iter2
-
+              
               ! do the TM multiplication             
-              CALL TMMult2DZZ( PsiA, PsiB, Ilayer, &
-                    Energy, DiagDis, KappaA, KappaB, IWidth) 
+              CALL TMMultNNN( PsiA, PsiB, Ilayer, &
+                   HopMatiLR, HopMatiL, EMat, dummyMat, OnsitePotVec, &
+                   Energy, DiagDis, IRange) 
 
-              CALL TMMult2DZZ( PsiB, PsiA, Ilayer+1, &
-                    Energy, DiagDis, KappaB, KappaA, IWidth)  
-              
-              !CALL Swap( PsiA, PsiB, IWidth)
-              
-           ENDDO !northo_loop
+              CALL TMMultNNN( PsiB, PsiA, Ilayer+1, &
+                   HopMatiLR, HopMatiL, EMat, dummyMat, OnsitePotVec, &
+                   Energy, DiagDis, IRange)  
 
-           CASE(1) !ArmChair
-
-           DO Iter2= 1, NOfOrtho, 4
-
-              ! Ilayer is the current horizontal position
-              Ilayer= (Iter1-1)*NOfOrtho+Iter2
-
-              SELECT CASE (IBCFlag)
-
-              CASE (0) !Hardwall
-
-                 ! do the TM multiplication             
-                  CALL TMMultACHWI( PsiA, PsiB, Ilayer, &
-                       Energy, DiagDis, IWidth) 
-                  CALL TMMultACHWII( PsiA, PsiB, Ilayer+1, &
-                       Energy, DiagDis, IWidth)
-                  CALL TMMultACHWIII( PsiA, PsiB, Ilayer+2, &
-                       Energy, DiagDis, IWidth) 
-                  CALL TMMultACHWIV( PsiA, PsiB, Ilayer+3, &
-                       Energy, DiagDis, IWidth)                
-              
-                 ! do the TM multiplication as a function of Kappa             
-                 !CALL TMMultKACI( PsiA, PsiB, Ilayer, &
-                   !   Energy, DiagDis, Kappa, IWidth) 
-                 !CALL TMMultKACII( PsiA, PsiB, Ilayer+1, &
-               !       Energy, DiagDis, Kappa, IWidth)
-                 !CALL TMMultKACIII( PsiA, PsiB, Ilayer+2, &
-               !       Energy, DiagDis, Kappa, IWidth) 
-                 !CALL TMMultKACIV( PsiA, PsiB, Ilayer+3, &
-               !       Energy, DiagDis, Kappa, IWidth)                
-
-              CASE (1) !Periodic
-
-              ! do the TM multiplication             
-              CALL TMMult2DACI( PsiA, PsiB, Ilayer, &
-                    Energy, DiagDis, IWidth) 
-              CALL TMMult2DACII( PsiA, PsiB, Ilayer+1, &
-                   Energy, DiagDis, IWidth)
-              CALL TMMult2DACIII( PsiA, PsiB, Ilayer+2, &
-                    Energy, DiagDis, IWidth) 
-              CALL TMMult2DACIV( PsiA, PsiB, Ilayer+3, &
-                   Energy, DiagDis, IWidth)                
-              
-              ! do the TM multiplication as a function of Kappa             
-              !CALL TMMultKACI( PsiA, PsiB, Ilayer, &
-               !     Energy, DiagDis, Kappa, IWidth) 
-              !CALL TMMultKACII( PsiA, PsiB, Ilayer+1, &
-               !     Energy, DiagDis, Kappa, IWidth)
-              !CALL TMMultKACIII( PsiA, PsiB, Ilayer+2, &
-               !     Energy, DiagDis, Kappa, IWidth) 
-              !CALL TMMultKACIV( PsiA, PsiB, Ilayer+3, &
-               !     Energy, DiagDis, Kappa, IWidth)    
-              
-               END SELECT
+              !CALL Swap( PsiA, PsiB, IRange)
 
            ENDDO !northo_loop
 
-           END SELECT
-            
            !-------------------------------------------------------
            ! renormalize via Gram-Schmidt
            !-------------------------------------------------------
-           
-           CALL ReNorm(PsiA,PsiB,gamma,gamma2,IWidth)
-           
+
+           CALL ReNorm(PsiA,PsiB,gamma,gamma2,IRange)
+
            IF(IWriteFlag.GE.MAXWriteFLAG+1) THEN   
               PRINT*,"DBG: Orth,iL,PsiA", iLayer, PsiA
               PRINT*,"DBG: Orth,iL,PsiB", iLayer, PsiB; !PAUSE
@@ -479,36 +431,36 @@ tmm_loop: &
            ! sort the eigenvalues by LARGEST first AND also
            ! resort the eigenvectors accordingly
            !-------------------------------------------------------           
-           
+
            IF (ISortFlag.EQ.1) THEN
-               CALL ReSort(PsiA,PsiB,gamma,gamma2,IWidth)          
+              CALL ReSort(PsiA,PsiB,gamma,gamma2,IRange)          
            ENDIF
-           
+
            !--------------------------------------------------------
            ! "Iter1" counts the number of actual renormalizations
            ! of the transfer matrix.
            !--------------------------------------------------------
-           
+
            !-----------------------------------------------------------
            ! do the gamma computations
            !-----------------------------------------------------------         
 
-              DO iG=1, IWidth
-                
-                 nGamma(IWidth+1-iG)= gamma(iG)/REAL(NOfOrtho*Iter1)
-                
-                 acc_variance(IWidth+1-iG)=             &
-                      SQRT( ABS(                        &
-                      (gamma2(iG)/REAL(Iter1) -         &
-                      (gamma(iG)/REAL(Iter1))**2 )      &
-                      / REAL( MAX(Iter1-1,1) )          &
-                      )) / ABS( gamma(iG)/REAL(Iter1) )
-              ENDDO           
-           
+           DO iG=1, IRange
+
+              nGamma(IRange+1-iG)= gamma(iG)/REAL(NOfOrtho*Iter1)
+
+              acc_variance(IRange+1-iG)=             &
+                   SQRT( ABS(                        &
+                   (gamma2(iG)/REAL(Iter1) -         &
+                   (gamma(iG)/REAL(Iter1))**2 )      &
+                   / REAL( MAX(Iter1-1,1) )          &
+                   )) / ABS( gamma(iG)/REAL(Iter1) )
+           ENDDO
+
            !-----------------------------------------------------------
            ! write the nGamma data to file
            !-----------------------------------------------------------
-           
+
            IF(IWriteFlag.GE.2) THEN
               CALL WriteOutputGamma( Iter1, & 
                    nGamma, acc_variance, & 
@@ -519,32 +471,31 @@ tmm_loop: &
                  STOP
               ENDIF
            ENDIF
-            
- 
+
            !--------------------------------------------------------
            ! write the nGamma data to stdout
            !--------------------------------------------------------
-           
+
            IF(IWriteFlag.GE.1 .AND. MOD(Iter1,NOfPrint).EQ.0 ) THEN
               WRITE(*,4210) Iter1, nGamma(1), acc_variance(1)
-4210        FORMAT(I9.1, G15.7, G15.7)
+4210          FORMAT(I9.1, G15.7, G15.7)
            ENDIF
-           
+
            !-----------------------------------------------------------
            ! check accuracy and dump the result
            !-----------------------------------------------------------
-           
-           IF(Iter1.GE.IWidth .AND. &
+
+           IF(Iter1.GE.IRange .AND. &
                 Iter1.GE.MINIter) THEN
- 
-                  IF(acc_variance(1).LE.Epsilon .AND. &
-                     acc_variance(1).GE.TINY) THEN
-                      TMM_CONVERGED=1
-                      GOTO 4000
-                  ENDIF
+
+              IF(acc_variance(1).LE.Epsilon .AND. &
+                   acc_variance(1).GE.TINY) THEN
+                 TMM_CONVERGED=1
+                 GOTO 4000
+              ENDIF
 
            ENDIF
-     
+
            CALL cpu_time(finish)
            hours=(finish-start)/3600.0
 
@@ -558,147 +509,82 @@ tmm_loop: &
                     PRINT*,"main: error in SaveLoopParams()"
                     STOP
                  ENDIF
-               ENDIF
- 
+              ENDIF
+
               !PRINT*, "flag: saveloopparams complete"
               !PRINT*, "flag: restartroutine"   
 
-              SELECT CASE (IEdgeFlag)
+              SELECT CASE (IFluxFlag)
+              CASE (0) !Disorder flux    
 
-              CASE (0) !ZigZag
+                 SELECT CASE (IBCFlag)
 
-                 SELECT CASE (IFluxFlag)
-
-                 CASE (0) !Disorder flux    
-
-                    SELECT CASE (IBCFlag)
-
-                    CASE (0) !Hardwall
-           
-                    IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineZZDISHW(IErr)
-                      IF( IErr.NE.0 ) THEN
-                        PRINT*,"main: error in RestartRoutineZZDISHW()"
-                        STOP
-                      ENDIF
-                    ENDIF
-                    
-                    CASE (1) !Periodic
-           
-                    IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineZZDISPBC(IErr)
-                      IF( IErr.NE.0 ) THEN
-                        PRINT*,"main: error in RestartRoutineZZDISPBC()"
-                        STOP
-                      ENDIF
-                    ENDIF
-
-                    END SELECT
-
-                 CASE (1) !Energy flux
-
-                    SELECT CASE (IBCFlag)
-
-                    CASE (0) !Hardwall
+                 CASE (0) !Hardwall
 
                     IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineZZENEHW(IErr)
-                      IF( IErr.NE.0 ) THEN
-                         PRINT*,"main: error in RestartRoutineZZENEHW()"
-                         STOP
-                      ENDIF
-                    ENDIF
-                   
-                    CASE (1) !Periodic
-           
-                    IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineZZENEPBC(IErr)
-                      IF( IErr.NE.0 ) THEN
-                        PRINT*,"main: error in RestartRoutineZZENEPBC()"
-                        STOP
-                      ENDIF
-                    ENDIF
-                
-                    END SELECT
-
-                END SELECT
-
-             CASE (1) !ArmChair
-
-                 SELECT CASE (IFluxFlag)
-
-                 CASE (0) !Disorder flux    
-
-                    SELECT CASE (IBCFlag)
-
-                    CASE (0) !Hardwall
-           
-                    IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineACDISHW(IErr)
-                      IF( IErr.NE.0 ) THEN
-                        PRINT*,"main: error in RestartRoutineACDISHW()"
-                        STOP
-                      ENDIF
-                    ENDIF
-                    
-                    CASE (1) !Periodic
-           
-                    IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineACDISPBC(IErr)
-                      IF( IErr.NE.0 ) THEN
-                        PRINT*,"main: error in RestartRoutineACDISPBC()"
-                        STOP
-                      ENDIF
+                       CALL RestartRoutineZZDISHW(IErr)
+                       IF( IErr.NE.0 ) THEN
+                          PRINT*,"main: error in RestartRoutineZZDISHW()"
+                          STOP
+                       ENDIF
                     ENDIF
 
-                    END SELECT
-
-                 CASE (1) !Energy flux
-
-                    SELECT CASE (IBCFlag)
-
-                    CASE (0) !Hardwall
+                 CASE (1) !Periodic
 
                     IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineACENEHW(IErr)
-                      IF( IErr.NE.0 ) THEN
-                         PRINT*,"main: error in RestartRoutineACENEHW()"
-                         STOP
-                      ENDIF
+                       CALL RestartRoutineZZDISPBC(IErr)
+                       IF( IErr.NE.0 ) THEN
+                          PRINT*,"main: error in RestartRoutineZZDISPBC()"
+                          STOP
+                       ENDIF
                     ENDIF
-                   
-                    CASE (1) !Periodic
-           
-                    IF(IRestart .GE. 1) THEN
-                      CALL RestartRoutineACENEPBC(IErr)
-                      IF( IErr.NE.0 ) THEN
-                        PRINT*,"main: error in RestartRoutineACENEPBC()"
-                        STOP
-                      ENDIF
-                    ENDIF
-                
-                    END SELECT
 
-                END SELECT
+                 END SELECT
+
+              CASE (1) !Energy flux
+
+                 SELECT CASE (IBCFlag)
+
+                 CASE (0) !Hardwall
+
+                    IF(IRestart .GE. 1) THEN
+                       CALL RestartRoutineZZENEHW(IErr)
+                       IF( IErr.NE.0 ) THEN
+                          PRINT*,"main: error in RestartRoutineZZENEHW()"
+                          STOP
+                       ENDIF
+                    ENDIF
+
+                 CASE (1) !Periodic
+
+                    IF(IRestart .GE. 1) THEN
+                       CALL RestartRoutineZZENEPBC(IErr)
+                       IF( IErr.NE.0 ) THEN
+                          PRINT*,"main: error in RestartRoutineZZENEPBC()"
+                          STOP
+                       ENDIF
+                    ENDIF
+
+                 END SELECT
 
               END SELECT
 
               EXIT
            ENDIF
-        
-       ENDDO tmm_loop
-     
-       IF(TMM_CONVERGED .NE. 1) THEN
-          PRINT*,"main: No convergence in TMM_loop!"
-       ENDIF        
+
+        ENDDO tmm_loop
+
+        IF(TMM_CONVERGED .NE. 1) THEN
+           PRINT*,"main: No convergence in TMM_loop!"
+        ENDIF
 
 4000    CONTINUE  
 
         !--------------------------------------------------------------
         ! write the AVG data
         !--------------------------------------------------------------
-        
-        CALL WriteOutputAvg( IWidth, &
+
+        CALL WriteOutputAvg( IRange, &
              DiagDis,Energy, &
              nGamma, acc_variance, &
              NOfG, PsiA, IErr, TMM_CONVERGED)
@@ -707,11 +593,11 @@ tmm_loop: &
            PRINT*,"main: error in WriteOutputAvg()"
            STOP
         ENDIF
-        
-       !--------------------------------------------------------
-       ! write the nGamma data to stdout
-       !--------------------------------------------------------
-           
+
+        !--------------------------------------------------------
+        ! write the nGamma data to stdout
+        !--------------------------------------------------------
+
         WRITE(*,5010) Iter1, &
              DiagDis,Energy, Kappa
         WRITE(*,5012) nGamma(1), acc_variance(1)
@@ -724,7 +610,7 @@ tmm_loop: &
         !--------------------------------------------------------------
         ! close the nGamma file
         !--------------------------------------------------------------
-        
+
         IF(IWriteFlag.GE.2) THEN
            CALL CloseOutputGamma( IErr )
            !PRINT*, "DBG: IErr=", IErr
@@ -734,16 +620,16 @@ tmm_loop: &
            ENDIF
         ENDIF
 
-       IF(hours .GT. IWalltime-1) THEN
-         EXIT
-       ENDIF
-        
+        IF(hours .GT. IWalltime-1) THEN
+           EXIT
+        ENDIF
+
         !--------------------------------------------------------------
         ! end of flux loop
         !--------------------------------------------------------------
-        
+
      ENDDO flux_loop
-     
+
      !-----------------------------------------------------------------
      ! close the AVG files
      !-----------------------------------------------------------------
@@ -754,48 +640,43 @@ tmm_loop: &
         PRINT*,"main: error in CloseOutputAvg()"
         STOP
      ENDIF
-     
+
      !--------------------------------------------------------------
      ! delete the current parameters
      !--------------------------------------------------------------
-     
-     CALL DeleteCurrentParameters(IWidth, IErr)
+
+     CALL DeleteCurrentParameters(IRange, IErr)
      IF(IErr.NE.0) THEN
         PRINT*,"main: ERR in DeleteCurrentParameters()"
      ENDIF
-     
+
      !--------------------------------------------------------------
      ! DEallocate the memory for the TMM, gamma and RND vectors
      !--------------------------------------------------------------
-     
+
      DEALLOCATE(PsiA,PsiB,nGamma,gamma,gamma2,acc_variance)
-     
+     DEALLOCATE(HopMatiLR,HopMatiL,EMat,dummyMat,OnsitePotVec)
+
      ! --------------------------------------------------
      ! get time at the end of the process
      ! --------------------------------------------------
+
+     CALL SYSTEM_CLOCK(ICurrentTime)
+     Duration=REAL(ICurrentTime-IStartTime)/REAL(IRate)
+     IHours = FLOOR(Duration/3600.0D0)
+     IMinutes = FLOOR(MOD(Duration,3600.0D0)/60.0D0)
+     ISeconds = MOD(Duration,3600.0D0)-IMinutes*60
+     IMilliSeconds = INT((Duration-(IHours*3600+IMinutes*60+ISeconds))*1000,IKIND)
      
-     T2 = ETIME(ENDTIME) 
-     
-     TIME(1,1) = T2 -T
-     TIME(2,1) = ENDTIME(1)-STARTTIME(1)
-     TIME(3,1) = ENDTIME(2)-STARTTIME(2)
-     
-     !IF(IWriteFlag.GE.2) THEN
-        T  = TIME(1,1)
-        T2 = TIME(2,1)
-        
-        WRITE(*,'(A39,6F12.4)') &
-             "SINGLE PROC --> TIME(USR,SYS,DIFF): ", &
-             & TIME(1,1), TIME(2,1), TIME(3,1)
-        
-     !ENDIF
-     
+     PRINT*, "tm1dNNN: used time=", IHours, "hrs ", &
+          IMinutes,"mins ",ISeconds,"secs ", IMilliSeconds,"millisecs"
+
      !-----------------------------------------------------------------
-     ! end of width loop
+     ! end of range loop
      !-----------------------------------------------------------------
-     
-  ENDDO width_loop
-  
-  STOP "TMSEGR $Revision: 1.1 $"
-  
-END PROGRAM TMSEGR
+
+  ENDDO range_loop
+
+  STOP "TM1DNNN $Revision:$"
+
+END PROGRAM TM1DNNN

@@ -25,12 +25,12 @@ F90FLAGS = -fbounds-check -fno-range-check -fimplicit-none -fcray-pointer # debu
 #F90FLAGS = -pg -fbounds-check -fno-range-check -fimplicit-none # profiling
 F77FLAGS = -fbounds-check -fno-range-check # debug
 
-LIBDIR = $(HOME)/f77/lib
+LIBDIR = /warwick/mathlib/gnu/x86_64/
 LIBFLAGS  =  -llapack -lblas
 
-OBJFILES = tm1dNNN_modules.o random.o main.o util.o inout.o 
+OBJFILES = tm1dNNN_modules.o random.o main.o util.o inout.o invert.o
 
-tm1dNNN.PG: $(OBJFILES)
+tm1dNNN.GF: $(OBJFILES)
 	$(F90) $(F90FLAGS) -o $@ \
 		$(OBJFILES) $(LIBFLAGS)
 

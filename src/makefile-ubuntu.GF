@@ -1,32 +1,36 @@
 #-----------------------------------------------------------------
 #
-# tm1dNNN
+# tmseGR
 #
 #-----------------------------------------------------------------
 #
 # $Header: /home/cvs/phsht/GrapheneTMM/src/Restart/ALL/makefileGR,v 1.1 2011/07/22 17:49:19 ccspam Exp $
 #
+# $Log: makefileGR,v $
+# Revision 1.1  2011/07/22 17:49:19  ccspam
+# Programs for ZZ and AC with the restart routine for francesca
+#
+# Revision 1.1  2011/05/31 13:55:07  ccspam
+# *** empty log message ***
+#
+# Revision 1.1  2011/05/06 08:13:09  phsht
+# 1st installement
+#
 #-----------------------------------------------------------------#
 
-F77 = pgf77
-F90 = pgf90
-#F90 = ifort
+F90 = gfortran -std=legacy
+F77 = gfortran -ffixed-form -std=legacy
 
-F77FLAGS = -C -g +u -Mr8 -Mdlines -Mextend		              # For debugging
-#F77FLAGS = -O2 -tp p6 -Mr8 -Munroll -Mnoframe -Mdclchk -Mextend   # For optimizing
-#F77FLAGS = -xpg -C -Mr8 -Mprof		                      # For profiling
-
-#F90FLAGS = -C -g -Mr8 -Mdlines -Mextend -Mdclchk	             # For debugging
-F90FLAGS = -O2 -Mr8 -Munroll -Mnoframe -Mdclchk		# For optimizing
-#F90FLAGS = -fast -Mr8 -C -Mprof=lines		                      # For profiling
-#F90FLAGS = -fno-range-check
+F90FLAGS = -fbounds-check -fno-range-check -fimplicit-none -fcray-pointer # debug
+#F90FLAGS = -pg -fbounds-check -fno-range-check -fimplicit-none # profiling
+F77FLAGS = -fbounds-check -fno-range-check # debug
 
 LIBDIR = $(HOME)/f77/lib
-LIBFLAGS  =  -llapack -lblas
+LIBFLAGS  =  -lm #-llapack -lblas
 
 OBJFILES = tm1dNNN_modules.o random.o main.o util.o inout.o 
 
-tm1dNNN.PG: $(OBJFILES)
+tm1dNNN.GF: $(OBJFILES)
 	$(F90) $(F90FLAGS) -o $@ \
 		$(OBJFILES) $(LIBFLAGS)
 

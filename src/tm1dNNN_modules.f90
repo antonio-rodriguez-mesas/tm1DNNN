@@ -1,7 +1,7 @@
 !********************************************************************
 !
-! TMSEXD - Transfer matrix method for the Anderson
-! model with diagonal disorder in X dimensions
+! TM1DNNN - Transfer matrix method for the Anderson model
+! in 1D with finite-range hopping
 !
 !********************************************************************
        
@@ -10,23 +10,6 @@
 ! $Header: /home/cvs/phsht/GrapheneTMM/src/Restart/ALL/tmseGR_modules.f90,v 1.1 2011/07/22 17:49:19 ccspam Exp $
 !
 !********************************************************************
-
-!**************************************************************************
-!$Log: tmseGR_modules.f90,v $
-!Revision 1.1  2011/07/22 17:49:19  ccspam
-!Programs for ZZ and AC with the restart routine for francesca
-!
-!Revision 1.2  2011/05/31 13:53:43  ccspam
-!*** empty log message ***
-!
-!Revision 1.1  2011/05/06 08:13:09  phsht
-!1st installement
-!
-!Revision 1.1  2010/11/11 11:16:25  phrkaj
-!Renamed files to get rid of any mention of SB.
-!
-!
-!**************************************************************************
 
 !--------------------------------------------------------------------
 MODULE MyNumbers     
@@ -84,10 +67,10 @@ MODULE CConstants
 END MODULE CConstants
 
 !------------------------------------------------------------------------------------------
-! MAXGamma needs to be equal to MAXWidth, as we need to find ALL
+! MAXGamma needs to be equal to MAXRange, as we need to find ALL
 ! Lyapunov exponents, so do not change!
 MODULE IConstants
-  INTEGER, PARAMETER :: MAXWidth= 1000, MAXGamma= MAXWidth, MAXIter=2147483646
+  INTEGER, PARAMETER :: MAXRange= 1000, MAXGamma= MAXRange, MAXIter=2147483646
   INTEGER, PARAMETER :: MAXKeepFlag= 3, MAXWriteFlag= 4, MAXFluxFlag= 3, MAXRNGFlag=2
   INTEGER, PARAMETER :: MAXSortFlag=1, MAXBCFlag=2
   INTEGER, PARAMETER :: MINDimenFlag=2, MAXDimenFlag=3
@@ -97,10 +80,10 @@ END MODULE IConstants
 !--------------------------------------------------------------------
 MODULE IPara
   INTEGER :: ISeed, NOfIter, NOfOrtho, NOfPrint, NOfGamma
-  INTEGER :: Width0, Width1, dWidth, IKeepFlag, IWriteFlag, ISortFlag
-  INTEGER :: IFluxFlag, IBCFlag, IRNGFlag, IKappaFlag, IEdgeFlag
+  INTEGER :: IRange0, IRange1, dIRange, IKeepFlag, IWriteFlag, ISortFlag
+  INTEGER :: IFluxFlag, IBCFlag, IRNGFlag, IKappaFlag
   INTEGER :: IRestart, IMidDump, IWalltime
-  INTEGER :: index1, Iter1, IWidth
+  INTEGER :: index1, Iter1, IRange
 END MODULE IPara
 
 !--------------------------------------------------------------------
