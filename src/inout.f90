@@ -232,11 +232,11 @@ SUBROUTINE Input( IErr )
      IErr= 1
   ENDIF
   
-  IF( MagFlux.GT.TINY) THEN
-     PRINT*,"Input(): MagFlux=", MagFlux, " is not implemented correctly - CAUTION!"
-     PRINT*,"Input(): program will continue to execute, but results may be WRONG  !"
-     IErr= 0
-  ENDIF
+!!$  IF( MagFlux.GT.TINY) THEN
+!!$     PRINT*,"Input(): MagFlux=", MagFlux, " is not implemented correctly - CAUTION!"
+!!$     PRINT*,"Input(): program will continue to execute, but results may be WRONG  !"
+!!$     IErr= 0
+!!$  ENDIF
   
   IF( Epsilon.LE.0.0D0) THEN
      PRINT*,"Input(): nonpositive Epsilon"
@@ -312,7 +312,7 @@ SUBROUTINE Input( IErr )
   PRINT*,"IKappaFlag    = 1          ; (22) 0/1 = square/ZZ lattice"
   PRINT*,"Kappa         = 1.0        ; (23) inter-layer hopping"
 
-  PRINT*,"MagFlux       = 0.0        ; (24) magnetic flux strength"
+!!$  PRINT*,"MagFlux       = 0.0        ; (24) magnetic flux strength"
   PRINT*,"Epsilon       = 5.0E-2     ; (25) accuracy goal of iteration"
 
   PRINT*,"IMidDump      = 1          ; (26) # dump values"
@@ -578,7 +578,10 @@ SUBROUTINE OpenOutputAvg( IErr )
      
      WRITE(IChOut,206,ERR=20) NOfGamma
 206  FORMAT("NOfGamma     = ", I15.1)
-     
+
+     WRITE(IChInp,207,ERR=20) IModelFlag
+2071 FORMAT("IModelFlag   = ", I15.1)
+          
      WRITE(IChOut,207,ERR=20) IBCFlag
 207  FORMAT("IBCFlag      = ", I15.1)
      
@@ -630,8 +633,8 @@ SUBROUTINE OpenOutputAvg( IErr )
      WRITE(IChOut,224,ERR=20) Kappa
 224  FORMAT("Kappa        = ", F18.9)
 
-     WRITE(IChOut,225,ERR=20) MagFlux
-225  FORMAT("MagFlux      = ", F18.9)
+!!$     WRITE(IChOut,225,ERR=20) MagFlux
+!!$225  FORMAT("MagFlux      = ", F18.9)
      
      WRITE(IChOut,226,ERR=20) Epsilon
 226  FORMAT("epsilon      = ", F18.9) 
