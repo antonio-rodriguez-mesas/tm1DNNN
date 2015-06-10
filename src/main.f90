@@ -307,8 +307,9 @@ flux_loop: &
         ! protocoll feature
         !--------------------------------------------------------------
 
-2600    WRITE(*,2610) IRange, DiagDis, Energy, Kappa
-2610    FORMAT("START @ IR= ",I4.1,    &
+2600    WRITE(*,2610) IModelFlag, IRange, DiagDis, Energy, Kappa
+2610    FORMAT("START @ IM= ",I4.1,    &
+             ", IR= ",I4.1,    &
              ", DD= ", G10.3,          &
              ", En= ", G10.3,          &
              ", KA= ", G10.3)
@@ -375,7 +376,7 @@ flux_loop: &
 
               IF( index .GE. jndex) THEN
                  HopMatiLR(index,jndex)= &
-                      -HoppingModel(IModelFlag, IRange - jndex + index)
+                      -HoppingModel(IModelFlag, IRange - index + jndex)
               ENDIF
 
               ! only off-diagonal elements of EMat
@@ -386,10 +387,10 @@ flux_loop: &
            ENDDO
         ENDDO
 
-!!$        PRINT*,"HopMatL=", HopMatiL
-!!$        PRINT*,"HopMatR=", HopMatiLR
-!!$        PRINT*,"EMat=", EMat
-!!$        PAUSE
+        PRINT*,"HopMatL=", TRANSPOSE(HopMatiL)
+        PRINT*,"HopMatR=", TRANSPOSE(HopMatiLR)
+        PRINT*,"EMat=", TRANSPOSE(EMat)
+        PAUSE
 
         CALL INVERT(IRange,HopMatiL,dummyMat,IErr)
         IF( IErr.NE.0) THEN
@@ -400,8 +401,9 @@ flux_loop: &
 
         HopMatiLR= MATMUL(HopMatiL,HopMatiLR)
 
-!!$        PRINT*,"HopMatiL=", HopMatiL
-!!$        PRINT*,"HopMatiLR=", HopMatiLR
+        PRINT*,"HopMatiL=", TRANSPOSE(HopMatiL)
+        PRINT*,"HopMatiLR=", TRANSPOSE(HopMatiLR)
+        PAUSE
 
         !--------------------------------------------------------------
         ! iteration loop
