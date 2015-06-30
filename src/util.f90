@@ -70,7 +70,7 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
 
   dummyMat= MATMUL(dummyMat,PSI_A)
 
-  PSI_A= dummyMat + MATMUL(HopMatiLR,PSI_B)
+  PSI_B= dummyMat + MATMUL(HopMatiLR,PSI_B)
 
   !PRINT*,"PSIA(1,1),(2,1),(3,1),(4,1)",&
    !    PSI_A(1,1),PSI_A(2,1),PSI_A(3,1),PSI_A(4,1)
