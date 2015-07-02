@@ -368,7 +368,7 @@ SUBROUTINE SaveCurrent(IErr)
      WRITE(IChInp,206,ERR=20) NOfGamma
 206  FORMAT("NOfGamma     = ", I15.1)
      
-     WRITE(IChInp,207,ERR=20) IModelFlag
+     WRITE(IChInp,2071,ERR=20) IModelFlag
 2071 FORMAT("IModelFlag   = ", I15.1)
      
      WRITE(IChInp,207,ERR=20) IBCFlag
@@ -579,7 +579,7 @@ SUBROUTINE OpenOutputAvg( IErr )
      WRITE(IChOut,206,ERR=20) NOfGamma
 206  FORMAT("NOfGamma     = ", I15.1)
 
-     WRITE(IChInp,207,ERR=20) IModelFlag
+     WRITE(IChOut,2071,ERR=20) IModelFlag
 2071 FORMAT("IModelFlag   = ", I15.1)
           
      WRITE(IChOut,207,ERR=20) IBCFlag
