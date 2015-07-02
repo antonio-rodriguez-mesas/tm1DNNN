@@ -178,11 +178,13 @@ PROGRAM TM1DNNN
      flux0     = DiagDis0
      flux1     = DiagDis1
      dflux     = dDiagDis
+     Energy    = Energy0
   CASE(1)
      PRINT*, "main: Varying Energy"
      flux0     = Energy0
      flux1     = Energy1
      dflux     = dEnergy
+     DiagDis   = DiagDis0
   END SELECT
 
   !--------------------------------------------------------------------
@@ -387,10 +389,10 @@ flux_loop: &
            ENDDO
         ENDDO
 
-        PRINT*,"HopMatL=", TRANSPOSE(HopMatiL)
-        PRINT*,"HopMatR=", TRANSPOSE(HopMatiLR)
-        PRINT*,"EMat=", TRANSPOSE(EMat)
-        PAUSE
+!!$        PRINT*,"HopMatL=", TRANSPOSE(HopMatiL)
+!!$        PRINT*,"HopMatR=", TRANSPOSE(HopMatiLR)
+!!$        PRINT*,"EMat=", TRANSPOSE(EMat)
+!!$        PAUSE
 
         CALL INVERT(IRange,HopMatiL,dummyMat,IErr)
         IF( IErr.NE.0) THEN
@@ -401,9 +403,9 @@ flux_loop: &
 
         HopMatiLR= MATMUL(HopMatiL,HopMatiLR)
 
-        PRINT*,"HopMatiL=", TRANSPOSE(HopMatiL)
-        PRINT*,"HopMatiLR=", TRANSPOSE(HopMatiLR)
-        PAUSE
+!!$        PRINT*,"HopMatiL=", TRANSPOSE(HopMatiL)
+!!$        PRINT*,"HopMatiLR=", TRANSPOSE(HopMatiLR)
+!!$        PAUSE
 
         !--------------------------------------------------------------
         ! iteration loop
