@@ -40,13 +40,13 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   REAL(KIND=RKIND)  Dis,    &! diagonal disorder
        En                    ! energy
   
-  COMPLEX(KIND=CKIND) PSI_A(M,M), PSI_B(M,M)
+  REAL(KIND=RKIND) PSI_A(M,M), PSI_B(M,M)
   REAL(KIND=RKIND) HopMatiLR(M,M),HopMatiL(M,M), EMat(M,M),dummyMat(M,M)
   REAL(KIND=RKIND) OnsitePotVec(M)
   
   INTEGER iSite, jState
   REAL(KIND=RKIND) OnsitePot
-  COMPLEX(KIND=CKIND) new, PsiLeft, PsiRight
+  REAL(KIND=RKIND) new, PsiLeft, PsiRight
 
   !PRINT*,"TMMultNNN()"
 
@@ -65,12 +65,18 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   ENDDO ! iSite
   !PRINT*,"EMat=", EMat
 
-  dummyMat= MATMUL(HopMatiL,EMat)
-  !PRINT*,"HopMatiLE=", dummyMat; PAUSE
+!!$  dummyMat= MATMUL(HopMatiL,EMat)
+!!$  PRINT*,"HopMatiLE=", dummyMat; PAUSE
+  CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiL,M,EMat,M,0.0D0,dummyMat,M)
+!!$  PRINT*,"HopMatiLE=", dummyMat; PAUSE
 
   dummyMat= MATMUL(dummyMat,PSI_A)
 
-  PSI_B= dummyMat + MATMUL(HopMatiLR,PSI_B)
+!!$  PSI_B= dummyMat + MATMUL(HopMatiLR,PSI_B)
+!!$  PRINT*,"PsiB=", PSI_B; PAUSE
+  CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiLR,M,PSI_B,M,1.0D0,dummyMat,M)
+  PSI_B= dummyMat
+!!$  PRINT*,"PsiB=", PSI_B; PAUSE
 
   !PRINT*,"PSIA(1,1),(2,1),(3,1),(4,1)",&
    !    PSI_A(1,1),PSI_A(2,1),PSI_A(3,1),PSI_A(4,1)
@@ -107,12 +113,12 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
   
   INTEGER M,NORTHO
   
-  COMPLEX(KIND=CKIND) PSI_A(M,M), PSI_B(M,M)
+  REAL(KIND=RKIND) PSI_A(M,M), PSI_B(M,M)
   REAL(KIND=RKIND) GAMMA(M), GAMMA2(M)
   
   INTEGER IVec,JVec,KIndex
   
-  COMPLEX(KIND=CKIND) sum
+  REAL(KIND=RKIND) sum
   REAL(KIND=RKIND) dummy,norm, normbefore,quot
   !EQUIVALENCE (dummy,norm)
 
@@ -140,8 +146,10 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
         
         DO 300 KIndex=1,M
            
-           sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-                + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
+!!$           sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
+!!$                + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
+           sum= sum + (PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
+                + (PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
 300     ENDDO
         
         DO 400 KIndex=1,M
@@ -158,14 +166,18 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
      ! calculation of norm
      norm= REAL(0.D0,RKIND)
      DO 500 KIndex=1,M                      
-        norm= norm + CONJG(PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
-             + CONJG(PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
+!!$        norm= norm + CONJG(PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
+!!$             + CONJG(PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
+        norm= norm + (PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
+             + (PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
 500  ENDDO
      ! renormalization
      dummy= 1.D0/SQRT(norm)
      DO 600 KIndex=1,M
-        PSI_A(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_A(IVec,KIndex)
-        PSI_B(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_B(IVec,KIndex)
+!!$        PSI_A(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_A(IVec,KIndex)
+!!$        PSI_B(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_B(IVec,KIndex)
+        PSI_A(IVec,KIndex)= dummy * PSI_A(IVec,KIndex)
+        PSI_B(IVec,KIndex)= dummy * PSI_B(IVec,KIndex)
 600  ENDDO
      
      !	----------------------------------------------------------------
@@ -187,8 +199,10 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
         DO JVec=1,IVec-1
            sum= REAL(0.D0,RKIND)
            DO KIndex=1,M
-              sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-                   + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
+!!$              sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
+!!$                   + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
+              sum= sum + (PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
+                   + (PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
            ENDDO
            PRINT*,"Renorm: <",JVec,"|",IVec,">=",sum
         ENDDO
@@ -380,7 +394,7 @@ SUBROUTINE ReSort( PSI_A, PSI_B, array0, array1, N )
   USE MyNumbers
   
   INTEGER N
-  COMPLEX(KIND=CKIND) PSI_A(N,N),PSI_B(N,N)
+  REAL(KIND=RKIND) PSI_A(N,N),PSI_B(N,N)
   REAL(KIND=RKIND) array0(N), array1(N)
   
   REAL(KIND=RKIND) ALN2I, LocalTINY
