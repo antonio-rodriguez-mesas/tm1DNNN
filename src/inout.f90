@@ -64,6 +64,10 @@ SUBROUTINE Input( IErr )
   !PRINT*,"NOfGamma     = ", NOfGamma
   
   ILine= ILine+1
+  READ(IChInp,10,ERR=20,END=30) IModelFlag
+  !PRINT*,"IModelFlag   = ", IModelFlag
+  
+  ILine= ILine+1
   READ(IChInp,10,ERR=20,END=30) IBCFlag
   !PRINT*,"IBCFlag      = ", IBCFlag
   
@@ -228,11 +232,11 @@ SUBROUTINE Input( IErr )
      IErr= 1
   ENDIF
   
-  IF( MagFlux.GT.TINY) THEN
-     PRINT*,"Input(): MagFlux=", MagFlux, " is not implemented correctly - CAUTION!"
-     PRINT*,"Input(): program will continue to execute, but results may be WRONG  !"
-     IErr= 0
-  ENDIF
+!!$  IF( MagFlux.GT.TINY) THEN
+!!$     PRINT*,"Input(): MagFlux=", MagFlux, " is not implemented correctly - CAUTION!"
+!!$     PRINT*,"Input(): program will continue to execute, but results may be WRONG  !"
+!!$     IErr= 0
+!!$  ENDIF
   
   IF( Epsilon.LE.0.0D0) THEN
      PRINT*,"Input(): nonpositive Epsilon"
@@ -285,6 +289,7 @@ SUBROUTINE Input( IErr )
   PRINT*,"NOfPrint      = 10         ; (4) # steps until printout"
   PRINT*,"NOfGamma      = 1          ; (5) # smallest Lyapunov exponents"
 
+  PRINT*,"IModelFlag    = 0          ; (6) -1/0/1/2 = "
   PRINT*,"IBCFlag       = 0          ; (6) 0/1/2 = hard wall/periodic/antiperiodic BC"
   PRINT*,"IRNGFlag      = 0          ; (7) 0/1/2 = uniform/rescaled uniform/Gaussian disorder"
   PRINT*,"IKeepFlag     = 0          ; (8) 0/1 = yes/no data overwrite"
@@ -307,7 +312,7 @@ SUBROUTINE Input( IErr )
   PRINT*,"IKappaFlag    = 1          ; (22) 0/1 = square/ZZ lattice"
   PRINT*,"Kappa         = 1.0        ; (23) inter-layer hopping"
 
-  PRINT*,"MagFlux       = 0.0        ; (24) magnetic flux strength"
+!!$  PRINT*,"MagFlux       = 0.0        ; (24) magnetic flux strength"
   PRINT*,"Epsilon       = 5.0E-2     ; (25) accuracy goal of iteration"
 
   PRINT*,"IMidDump      = 1          ; (26) # dump values"
@@ -363,6 +368,9 @@ SUBROUTINE SaveCurrent(IErr)
      WRITE(IChInp,206,ERR=20) NOfGamma
 206  FORMAT("NOfGamma     = ", I15.1)
      
+     WRITE(IChInp,2071,ERR=20) IModelFlag
+2071 FORMAT("IModelFlag   = ", I15.1)
+     
      WRITE(IChInp,207,ERR=20) IBCFlag
 207  FORMAT("IBCFlag      = ", I15.1)
      
@@ -382,13 +390,13 @@ SUBROUTINE SaveCurrent(IErr)
 212  FORMAT("IFluxFlag    = ", I15.1)
 
      WRITE(IChInp,214,ERR=20) IRange0
-214  FORMAT("IRange0       = ", I15.1)
+214  FORMAT("IRange0      = ", I15.1)
      
      WRITE(IChInp,215,ERR=20) IRange1
-215  FORMAT("IRange1       = ", I15.1)
+215  FORMAT("IRange1      = ", I15.1)
      
      WRITE(IChInp,216,ERR=20) dIRange
-216  FORMAT("dIRange       = ", I15.1)
+216  FORMAT("dIRange      = ", I15.1)
      
      WRITE(IChInp,217,ERR=20) DiagDis
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -467,7 +475,7 @@ SUBROUTINE CheckOutputAvg( IErr )
 
   LOGICAL::LExist
   
-  CHARACTER*23 CName
+  CHARACTER*31 CName
   
   !	PRINT*,"DBG: CheckOutputAvg()"
   
@@ -476,13 +484,15 @@ SUBROUTINE CheckOutputAvg( IErr )
   !   WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(Energy*1000.0), "E-Dis.raw"
   ELSE
-     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(DiagDis*1000.0), "D-Ene.raw"
   ENDIF
 
-300  FORMAT(I4.4,A2,I5.5,A9)
-301  FORMAT(I4.4,A2,I5.5,A9)
+300  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
+301  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
 
   !PRINT*, "flag: Checking AVG"
 
@@ -518,32 +528,38 @@ SUBROUTINE OpenOutputAvg( IErr )
   
   INTEGER IErr
   
-  CHARACTER*23 CName
-  CHARACTER*23 PName
+  CHARACTER*31 CName
+  CHARACTER*31 PName
   
   !PRINT*,"DBG: OpenOutputAvg()"
   
   IErr= 0
 
-   !	WRITE out the input parameter
+  !	WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(Energy*1000.0), "E-Dis.raw"
   ELSE
-     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(DiagDis*1000.0), "D-Ene.raw"
   ENDIF
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IRange,"W-",ISeed,"S-Dis.psi"
+     WRITE(PName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(Energy*1000.0), "E-Dis.psi"
   ELSE
-     WRITE(PName,301) IRange,"W-",ISeed,"S-Ene.psi"
+     WRITE(PName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(DiagDis*1000.0), "D-Ene.psi"
   ENDIF
 
-300  FORMAT(I4.4,A2,I5.5,A9)
-301  FORMAT(I4.4,A2,I5.5,A9)
+300  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
+301  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
+
+  !PRINT*,"Cname=",CName,", PName=",PName,";"
 
      OPEN(UNIT=IChOut, ERR=10, STATUS= 'UNKNOWN', FILE=CName)
-     OPEN(UNIT=IChOutPsi, ERR=10, STATUS= 'UNKNOWN', FILE=PName)
+     OPEN(UNIT=IChOutPsi, ERR=15, STATUS= 'UNKNOWN', FILE=PName)
 
      WRITE(IChOut,201,ERR=20) RStr,DStr,AStr
 201  FORMAT("(* ",3A," *)")
@@ -562,7 +578,10 @@ SUBROUTINE OpenOutputAvg( IErr )
      
      WRITE(IChOut,206,ERR=20) NOfGamma
 206  FORMAT("NOfGamma     = ", I15.1)
-     
+
+     WRITE(IChOut,2071,ERR=20) IModelFlag
+2071 FORMAT("IModelFlag   = ", I15.1)
+          
      WRITE(IChOut,207,ERR=20) IBCFlag
 207  FORMAT("IBCFlag      = ", I15.1)
      
@@ -582,13 +601,13 @@ SUBROUTINE OpenOutputAvg( IErr )
 212  FORMAT("IFluxFlag    = ", I15.1)
 
      WRITE(IChOut,214,ERR=20) IRange0
-214  FORMAT("IRange0       = ", I15.1)
+214  FORMAT("IRange0      = ", I15.1)
      
      WRITE(IChOut,215,ERR=20) IRange1
-215  FORMAT("IRange1       = ", I15.1)
+215  FORMAT("IRange1      = ", I15.1)
      
      WRITE(IChOut,216,ERR=20) dIRange
-216  FORMAT("dIRange       = ", I15.1)
+216  FORMAT("dIRange      = ", I15.1)
      
      WRITE(IChOut,217,ERR=20) DiagDis0
 217  FORMAT("DiagDis0     = ", F18.9)
@@ -614,8 +633,8 @@ SUBROUTINE OpenOutputAvg( IErr )
      WRITE(IChOut,224,ERR=20) Kappa
 224  FORMAT("Kappa        = ", F18.9)
 
-     WRITE(IChOut,225,ERR=20) MagFlux
-225  FORMAT("MagFlux      = ", F18.9)
+!!$     WRITE(IChOut,225,ERR=20) MagFlux
+!!$225  FORMAT("MagFlux      = ", F18.9)
      
      WRITE(IChOut,226,ERR=20) Epsilon
 226  FORMAT("epsilon      = ", F18.9) 
@@ -635,7 +654,12 @@ SUBROUTINE OpenOutputAvg( IErr )
   RETURN
      
   !	error in OPEN detected
-10 PRINT*,"OpenOutputAvg(): ERR in OPEN()"
+10 PRINT*,"OpenOutputAvg(): ERR in OPEN() for ", CName
+  IErr= 1
+  RETURN
+  
+  !	error in OPEN detected
+15 PRINT*,"OpenOutputAvg(): ERR in OPEN() for ", PName
   IErr= 1
   RETURN
   
@@ -667,8 +691,8 @@ SUBROUTINE ReOpenOutputAvg( IErr )
   
   INTEGER IErr
   
-  CHARACTER*23 CName
-  CHARACTER*23 PName
+  CHARACTER*31 CName
+  CHARACTER*31 PName
   
   ! PRINT*,"DBG: ReOpenOutputAvg()"
 
@@ -677,19 +701,23 @@ SUBROUTINE ReOpenOutputAvg( IErr )
   ! WRITE out the input parameter
 
   IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IRange,"W-",ISeed,"S-Dis.raw"
+     WRITE(CName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(Energy*1000.0), "E-Dis.raw"
   ELSE
-     WRITE(CName,301) IRange,"W-",ISeed,"S-Ene.raw"
+     WRITE(CName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(DiagDis*1000.0), "D-Ene.raw"
   ENDIF
 
- IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IRange,"W-",ISeed,"S-Dis.psi"
+  IF (IFluxFlag .EQ. 0) THEN
+     WRITE(PName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(Energy*100.0), "E-Dis.psi"
   ELSE
-     WRITE(PName,301) IRange,"W-",ISeed,"S-Ene.psi"
+     WRITE(PName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
+          NINT(DiagDis*100.0), "D-Ene.psi"
   ENDIF
 
-300  FORMAT(I4.4,A2,I5.5,A9)
-301  FORMAT(I4.4,A2,I5.5,A9)
+300  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
+301  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
 
  !PRINT*, "flag: Re-Opening AVG"
 

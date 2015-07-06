@@ -61,9 +61,9 @@ END MODULE MyNumbers
 
 !--------------------------------------------------------------------------------------------
 MODULE CConstants
-  CHARACTER*18, PARAMETER :: RStr= "$Revision: 1.1 $ "
-  CHARACTER*30, PARAMETER :: DStr= "$Date: 2011/07/22 17:49:19 $ "
-  CHARACTER*16, PARAMETER :: AStr= "$Author: ccspam $ "
+  CHARACTER*18, PARAMETER :: RStr= "$Revision: 0.1 $ "
+  CHARACTER*30, PARAMETER :: DStr= "$Date: 2015/06/01 17:49:19 $ "
+  CHARACTER*16, PARAMETER :: AStr= "$Author: phsht $ "
 END MODULE CConstants
 
 !------------------------------------------------------------------------------------------
@@ -71,8 +71,8 @@ END MODULE CConstants
 ! Lyapunov exponents, so do not change!
 MODULE IConstants
   INTEGER, PARAMETER :: MAXRange= 1000, MAXGamma= MAXRange, MAXIter=2147483646
-  INTEGER, PARAMETER :: MAXKeepFlag= 3, MAXWriteFlag= 4, MAXFluxFlag= 3, MAXRNGFlag=2
-  INTEGER, PARAMETER :: MAXSortFlag=1, MAXBCFlag=2
+  INTEGER, PARAMETER :: MAXKeepFlag= 3, MAXWriteFlag= 5, MAXFluxFlag= 3, MAXRNGFlag=2
+  INTEGER, PARAMETER :: MAXSortFlag=1, MAXModelFlag=2, MAXBCFlag=2
   INTEGER, PARAMETER :: MINDimenFlag=2, MAXDimenFlag=3
   INTEGER, PARAMETER :: MAXFiles= 5, MINIter=3
 END MODULE IConstants
@@ -81,7 +81,7 @@ END MODULE IConstants
 MODULE IPara
   INTEGER :: ISeed, NOfIter, NOfOrtho, NOfPrint, NOfGamma
   INTEGER :: IRange0, IRange1, dIRange, IKeepFlag, IWriteFlag, ISortFlag
-  INTEGER :: IFluxFlag, IBCFlag, IRNGFlag, IKappaFlag
+  INTEGER :: IFluxFlag, IBCFlag, IModelFlag, IRNGFlag, IKappaFlag
   INTEGER :: IRestart, IMidDump, IWalltime
   INTEGER :: index1, Iter1, IRange
 END MODULE IPara
@@ -115,7 +115,7 @@ END MODULE Randoms
 !------------------------------------------------------------------
 MODULE Extensions
   USE MyNumbers
-  COMPLEX(KIND=CKIND), ALLOCATABLE, DIMENSION(:,:) :: PsiA, PsiB
+  REAL(KIND=RKIND), ALLOCATABLE, DIMENSION(:,:) :: PsiA, PsiB
 END MODULE Extensions
 
 !-------------------------------------------------------------------------

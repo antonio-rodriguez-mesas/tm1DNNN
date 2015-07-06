@@ -12,19 +12,18 @@ F77 = pgf77
 F90 = pgf90
 #F90 = ifort
 
-F77FLAGS = -C -g +u -Mr8 -Mdlines -Mextend		              # For debugging
-#F77FLAGS = -O2 -tp p6 -Mr8 -Munroll -Mnoframe -Mdclchk -Mextend   # For optimizing
-#F77FLAGS = -xpg -C -Mr8 -Mprof		                      # For profiling
+#F77FLAGS = -C -g +u -Mr8 -Mdlines -Mextend -Mdclchk	              # For debugging
+#F77FLAGS = -xpg -C -Mr8 -Mprof -Mdclchk	                      # For profiling
+F77FLAGS = -O2 -Mr8 -Munroll -Mnoframe -Mdclchk -Mextend   # For optimizing
 
 #F90FLAGS = -C -g -Mr8 -Mdlines -Mextend -Mdclchk	             # For debugging
-F90FLAGS = -O2 -Mr8 -Munroll -Mnoframe -Mdclchk		# For optimizing
-#F90FLAGS = -fast -Mr8 -C -Mprof=lines		                      # For profiling
-#F90FLAGS = -fno-range-check
+#F90FLAGS = -Mprof=lines -O3 -Mr8 -Munroll -Mnoframe -Mdclchk         # For profiling
+F90FLAGS = -O3 -Mr8 -Munroll -Mnoframe -Mdclchk		# For optimizing
 
 LIBDIR = $(HOME)/f77/lib
 LIBFLAGS  =  -llapack -lblas
 
-OBJFILES = tm1dNNN_modules.o random.o main.o util.o inout.o 
+OBJFILES = tm1dNNN_modules.o models.o random.o main.o util.o inout.o invert.o
 
 tm1dNNN.PG: $(OBJFILES)
 	$(F90) $(F90FLAGS) -o $@ \
@@ -32,21 +31,6 @@ tm1dNNN.PG: $(OBJFILES)
 
 %.o: %.f90
 	$(F90) $(F90FLAGS) -DF90 -c $< 
-
-#tm1dNNN_modules.o:     tm1dNNN_modules.f90
-#	$(F90) $(F90FLAGS) -c tm1dNNN_modules.f90
-
-#random.o:     random.f90
-#	$(F90) $(F90FLAGS) -c random.f90
-
-#main.o:     main.f90
-#	$(F90) $(F90FLAGS) -c main.f90
-
-#util.o:     util.f90
-#	$(F90) $(F90FLAGS) -c util.f90
-
-#inout.o:     inout.f90
-#	$(F90) $(F90FLAGS) -c inout.f90
 
 clean:
 	rm -f core *.mod *.o
