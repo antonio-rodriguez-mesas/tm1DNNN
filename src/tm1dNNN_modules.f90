@@ -115,7 +115,7 @@ END MODULE Randoms
 !------------------------------------------------------------------
 MODULE Extensions
   USE MyNumbers
-  COMPLEX(KIND=CKIND), ALLOCATABLE, DIMENSION(:,:) :: PsiA, PsiB
+  REAL(KIND=RKIND), ALLOCATABLE, DIMENSION(:,:) :: PsiA, PsiB
 END MODULE Extensions
 
 !-------------------------------------------------------------------------
