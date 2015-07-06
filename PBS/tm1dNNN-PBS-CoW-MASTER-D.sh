@@ -2,7 +2,7 @@
 
 # settings from input
 
-wtime=${1:-00:72:00}
+wtime=${1:-72:00:00}
 
 # settings for files
 
@@ -30,10 +30,10 @@ jobdir=${submitdir}
 for imodel in 0 1 2 3
 do
 
-for disorder in 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0
+for disorder in 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 5.0 6.0 7.0 8.0 9.0 10.0
 do
 
-for irange in 3 4 5 6 7 8 9 10 1 2
+for irange in 1 2 3 4 5 6 7 8 9 10 20 50 100 200 500 1000
 do
 
 jobname="NN-M$imodel-D$disorder-R$irange"
