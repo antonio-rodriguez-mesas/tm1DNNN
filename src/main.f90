@@ -97,7 +97,7 @@ PROGRAM TM1DNNN
 
   ! timing variables
   INTEGER :: IHours,IMinutes,ISeconds,IMilliSeconds, &
-       IStartTime, ICurrentTime ,IRate
+       IStartTime, IStartTimeTotal, ICurrentTime ,IRate
 
   REAL(RKIND) :: Duration, time
 
@@ -136,7 +136,7 @@ PROGRAM TM1DNNN
   !--------------------------------------------------------------------
 
   CALL SYSTEM_CLOCK(count_rate=IRate)
-  CALL SYSTEM_CLOCK(IStarttime)
+  CALL SYSTEM_CLOCK(IStartTimeTotal)
 
   !--------------------------------------------------------------------
   ! input handling
@@ -269,7 +269,7 @@ flux_loop: &
         !--------------------------------------------------------------------
 
         CALL SYSTEM_CLOCK(count_rate=IRate)
-        CALL SYSTEM_CLOCK(IStarttime)
+        CALL SYSTEM_CLOCK(IStartTime)
 
         !--------------------------------------------------------------
         ! set values for the physical quantities
@@ -696,6 +696,21 @@ tmm_loop:&
      !-----------------------------------------------------------------
 
   ENDDO range_loop
+
+  ! --------------------------------------------------
+  ! get time at the end of the total process
+  ! --------------------------------------------------
+  
+  CALL SYSTEM_CLOCK(ICurrentTime)
+  Duration=REAL(ICurrentTime-IStartTimeTotal)/REAL(IRate)
+  IHours = FLOOR(Duration/3600.0D0)
+  IMinutes = FLOOR(MOD(Duration,3600.0D0)/60.0D0)
+  ISeconds = MOD(Duration,3600.0D0)-IMinutes*60
+  IMilliSeconds = INT((Duration-(IHours*3600+IMinutes*60+ISeconds))*1000,IKIND)
+  
+  PRINT*, "tm1dNNN: used TOTAL time=", IHours, "hrs ", &
+       IMinutes,"mins ",ISeconds,"secs ", IMilliSeconds,"millisecs"
+
 
   STOP "TM1DNNN $Revision:$"
 

@@ -36,7 +36,7 @@ do
 for irange in 1 2 3 4 5 6 7 8 9 10 20 50 100 200 500 1000
 do
 
-jobname="NN-M$imodel-D$disorder-R$irange"
+jobname="NN_M$imodel_D$disorder_R$irange"
 echo $jobname
 
 jobfile=`printf "$jobname.sh"`
@@ -145,7 +145,7 @@ export MPICH_FAST_MEMCPY=1
 export IPATH_NO_CPUAFFINITY=1
   
 echo "--- starting the SIM run"
-./${binary}
+time ./${binary}
 
 # copy the result of the run in the detination for safekeeping
 #targetdir=${submitdir}/`basename ${job_file} .sh`
