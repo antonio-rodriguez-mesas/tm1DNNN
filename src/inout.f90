@@ -454,6 +454,61 @@ END SUBROUTINE SaveCurrent
 
 
 !--------------------------------------------------------------------
+! MakeOutputName
+!
+!	IErr	error code
+!---------------------------------------------------------------------
+
+SUBROUTINE MakeOutputName( CName, CType, IErr )
+
+  USE MyNumbers
+  
+  USE CConstants
+  USE IConstants
+  
+  USE IPara
+  USE DPara
+  
+  USE IChannels
+  
+  INTEGER IErr
+
+  CHARACTER*32 CName
+  CHARACTER*4 CType
+  
+  !	PRINT*,"DBG: MakeoutputName()"
+  
+  IErr= 0
+  
+  !   WRITE out the input parameter
+
+  SELECT CASE(IFLuxFLag)
+  CASE(0)
+     IF (Energy .GE. ZERO) THEN
+        WRITE(CName,300) IModelFlag, ISeed, IRange, NINT(ABS(Energy*1000.0)),&
+             CType
+     ELSE
+        WRITE(CName,301) IModelFlag, ISeed, IRange, NINT(ABS(Energy*1000.0)),&
+             CType
+     ENDIF
+  CASE(1)
+     WRITE(CName,400) IModelFlag, ISeed, IRange, NINT(DiagDis*1000.0),&
+          CType
+  CASE DEFAULT
+     IErr=1
+     PRINT*,"MakeOutputName(): ERR, wrong IFluxFlag=", IFluxFLag
+     RETURN
+  END SELECT
+
+300  FORMAT(I2.2,"M_",I5.5,"S_",I4.4,"R_+",I5.5,"E_Dis",A4)
+301  FORMAT(I2.2,"M_",I5.5,"S_",I4.4,"R_-",I5.5,"E_Dis",A4)
+
+400  FORMAT(I2.2,"M_",I5.5,"S_",I4.4,"R_+",I5.5,"D_Ene",A4)
+
+  RETURN
+END SUBROUTINE MakeOutputName
+
+!--------------------------------------------------------------------
 !CheckOutputAvg: Try to create new .raw file, fails if exists!
 !
 !	IErr	error code
@@ -475,7 +530,7 @@ SUBROUTINE CheckOutputAvg( IErr )
 
   LOGICAL::LExist
   
-  CHARACTER*31 CName
+  CHARACTER*32 CName
   
   !	PRINT*,"DBG: CheckOutputAvg()"
   
@@ -483,18 +538,12 @@ SUBROUTINE CheckOutputAvg( IErr )
   
   !   WRITE out the input parameter
 
-  IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(Energy*1000.0), "E-Dis.raw"
-  ELSE
-     WRITE(CName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(DiagDis*1000.0), "D-Ene.raw"
+  CALL MakeOutputName(CName,".raw",IErr)
+  !PRINT*,"CName=", CName,", PName=", PName
+  IF (IErr.NE.0) THEN
+     PRINT*,"CheckOutputAvg(): ERR in MakeOutputName() --- aborting!"
+     STOP
   ENDIF
-
-300  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
-301  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
-
-  !PRINT*, "flag: Checking AVG"
 
   INQUIRE(FILE=CName, ERR=10, EXIST=LExist)
 
@@ -528,8 +577,8 @@ SUBROUTINE OpenOutputAvg( IErr )
   
   INTEGER IErr
   
-  CHARACTER*31 CName
-  CHARACTER*31 PName
+  CHARACTER*32 CName
+  CHARACTER*32 PName
   
   !PRINT*,"DBG: OpenOutputAvg()"
   
@@ -537,29 +586,16 @@ SUBROUTINE OpenOutputAvg( IErr )
 
   !	WRITE out the input parameter
 
-  IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(Energy*1000.0), "E-Dis.raw"
-  ELSE
-     WRITE(CName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(DiagDis*1000.0), "D-Ene.raw"
+  CALL MakeOutputName(CName,".raw",IErr)
+  CALL MakeOutputName(PName,".psi",IErr)
+  PRINT*,"CName=", CName,", PName=", PName
+  IF (IErr.NE.0) THEN
+     PRINT*,"CheckOutputAvg(): ERR in MakeOutputName() --- aborting!"
+     STOP
   ENDIF
-
-  IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(Energy*1000.0), "E-Dis.psi"
-  ELSE
-     WRITE(PName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(DiagDis*1000.0), "D-Ene.psi"
-  ENDIF
-
-300  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
-301  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
-
-  !PRINT*,"Cname=",CName,", PName=",PName,";"
-
-     OPEN(UNIT=IChOut, ERR=10, STATUS= 'UNKNOWN', FILE=CName)
-     OPEN(UNIT=IChOutPsi, ERR=15, STATUS= 'UNKNOWN', FILE=PName)
+  
+  OPEN(UNIT=IChOut, ERR=10, STATUS= 'UNKNOWN', FILE=TRIM(CName))
+  OPEN(UNIT=IChOutPsi, ERR=15, STATUS= 'UNKNOWN', FILE=TRIM(PName))
 
      WRITE(IChOut,201,ERR=20) RStr,DStr,AStr
 201  FORMAT("(* ",3A," *)")
@@ -691,38 +727,25 @@ SUBROUTINE ReOpenOutputAvg( IErr )
   
   INTEGER IErr
   
-  CHARACTER*31 CName
-  CHARACTER*31 PName
+  CHARACTER*32 CName
+  CHARACTER*32 PName
   
   ! PRINT*,"DBG: ReOpenOutputAvg()"
 
   IErr= 0
   
   ! WRITE out the input parameter
-
-  IF (IFluxFlag .EQ. 0) THEN
-     WRITE(CName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(Energy*1000.0), "E-Dis.raw"
-  ELSE
-     WRITE(CName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(DiagDis*1000.0), "D-Ene.raw"
+  CALL MakeOutputName(CName,".raw",IErr)
+  CALL MakeOutputName(PName,".psi",IErr)
+  !PRINT*,"CName=", CName,", PName=", PName
+  IF (IErr.NE.0) THEN
+     PRINT*,"CheckOutputAvg(): ERR in MakeOutputName() --- aborting!"
+     STOP
   ENDIF
-
-  IF (IFluxFlag .EQ. 0) THEN
-     WRITE(PName,300) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(Energy*100.0), "E-Dis.psi"
-  ELSE
-     WRITE(PName,301) IModelFlag, "M-", ISeed,"S-", IRange,"R-",&
-          NINT(DiagDis*100.0), "D-Ene.psi"
-  ENDIF
-
-300  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
-301  FORMAT(I2.2,A2,I5.5,A2,I4.4,A2,I5.5,A9)
-
+  
  !PRINT*, "flag: Re-Opening AVG"
 
   OPEN(UNIT=IChOut, ERR=10, STATUS= 'OLD', ACCESS = 'APPEND', FILE=CName)
-
   OPEN(UNIT=IChOutPsi, ERR=10, STATUS= 'OLD', ACCESS = 'APPEND', FILE=PName)
 
   RETURN
@@ -823,7 +846,7 @@ SUBROUTINE WriteOutputPsi(&
   USE IChannels
   
   INTEGER Ilayer, IErr, M
-  COMPLEX(KIND=CKIND) psi(M,M)
+  REAL(KIND=RKIND) psi(M,M)
   
   INTEGER jState, iSite
 
@@ -2544,7 +2567,7 @@ SUBROUTINE OutputEVals( ILayer, M, IElements, Disorder,En, EVals, Csur, IErr )
   INTEGER ILayer, M, IElements, iState, IErr
   REAL(KIND=RKIND) Disorder, En
   CHARACTER*4 Csur
-  COMPLEX(KIND=CKIND) EVals(M)
+  REAL(KIND=RKIND) EVals(M)
   !EXTERNAL ARG
 
   CHARACTER*38 CNameP
@@ -2592,10 +2615,12 @@ SUBROUTINE OutputEVals( ILayer, M, IElements, Disorder,En, EVals, Csur, IErr )
   DO iState= 1, IElements
      
      WRITE(IChOutPsi,550,ERR=30) iState,&
-          DBLE(EVals(iState)), AIMAG(EVals(iState)), &
-          !-ATAN(AIMAG(EVals(iState))/DBLE(EVals(iState)))
-          ARG(AIMAG(EVals(iState)),DBLE(EVals(iState)))
-550  FORMAT( I4.1, " ", 3(G25.15) )
+!!$          DBLE(EVals(iState)), AIMAG(EVals(iState)), &
+!!$          !-ATAN(AIMAG(EVals(iState))/DBLE(EVals(iState)))
+!!$          ARG(AIMAG(EVals(iState)),DBLE(EVals(iState)))
+!!$550  FORMAT( I4.1, " ", 3(G25.15) )
+          EVals(iState)
+550  FORMAT( I4.1, " ", 1(G25.15) )
   ENDDO
      
   CLOSE(UNIT=IChOutPsi,ERR=40)
@@ -2644,7 +2669,7 @@ SUBROUTINE WriteDataC( &
   CHARACTER*40 surname
   CHARACTER*6 prefix,postfix
   INTEGER(KIND=IKIND) size, step, IErr
-  COMPLEX(KIND=CKIND) data(size)
+  REAL(KIND=RKIND) data(size)
 
   CHARACTER*50 filename
   INTEGER index
@@ -2663,17 +2688,23 @@ SUBROUTINE WriteDataC( &
   DO index=1,size,step
      !PRINT*,"DBG: index=", index
 	 IF (ABS(data(index)).GE. TINY) THEN
-     WRITE(IChOutWrite,100) DBLE(data(index)),AIMAG(data(index)), &
-          !-ATAN(AIMAG(EVals(iState))/DBLE(EVals(iState)))
-          !ARG(AIMAG(data(index)),DBLE(data(index)))
-          ARG(DBLE(data(index)),AIMAG(data(index)))
-	 ELSE
-     WRITE(IChOutWrite,100) DBLE(data(index)),AIMAG(data(index)), &
-          !-ATAN(AIMAG(EVals(iState))/DBLE(EVals(iState)))
-          0.0D0
-	 ENDIF
+!!$     WRITE(IChOutWrite,100) DBLE(data(index)),AIMAG(data(index)), &
+!!$          !-ATAN(AIMAG(EVals(iState))/DBLE(EVals(iState)))
+!!$          !ARG(AIMAG(data(index)),DBLE(data(index)))
+!!$          ARG(DBLE(data(index)),AIMAG(data(index)))
+!!$	 ELSE
+!!$     WRITE(IChOutWrite,100) DBLE(data(index)),AIMAG(data(index)), &
+!!$          !-ATAN(AIMAG(EVals(iState))/DBLE(EVals(iState)))
+!!$          0.0D0
+!!$	 ENDIF
+!!$	 
+!!$100  FORMAT(3(G25.15))
+     WRITE(IChOutWrite,100) data(index)
+  ELSE
+     WRITE(IChOutWrite,100) data(index)
+  ENDIF
 	 
-100  FORMAT(3(G25.15))
+100  FORMAT(1(G25.15))
   ENDDO
      
   CLOSE(IChoutWrite,ERR=30)
