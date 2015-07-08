@@ -27,16 +27,18 @@ jobdir=${submitdir}
 # compute jobs for gate sweep
 # this will use individual jobs along each x-line
 
+for irange in \
+1 2 5 10
+#3 4 5 6 7 8 9 10 20 50 100 200 #500 1000
+do
+
 for imodel in 0 1 2 3
 do
 
 for energy in 0.0 1.0
 do
 
-for irange in 1 2 3 4 5 6 7 8 9 10 20 50 100 200 500 1000
-do
-
-jobname="NN_M$imodel_E$energy_R$irange"
+jobname="NN-M$imodel-E$energy-R$irange"
 echo $jobname
 
 jobfile=`printf "$jobname.sh"`
@@ -165,6 +167,7 @@ chmod 755 ${jobdir}/${jobfile}
 #(cd ${jobdir} ; qsub -q devel ./${jobfile})
 #(cd ${jobdir} ; qsub -q taskfarm ${jobfile})
 #(cd ${jobdir} ; qsub ./${jobfile})
+sleep 1
 
 done
 done

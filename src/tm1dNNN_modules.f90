@@ -61,8 +61,8 @@ END MODULE MyNumbers
 
 !--------------------------------------------------------------------------------------------
 MODULE CConstants
-  CHARACTER*18, PARAMETER :: RStr= "$Revision: 0.1 $ "
-  CHARACTER*30, PARAMETER :: DStr= "$Date: 2015/06/01 17:49:19 $ "
+  CHARACTER*18, PARAMETER :: RStr= "$Revision: 0.2 $ "
+  CHARACTER*30, PARAMETER :: DStr= "$Date: 2015/07/07 16:00 $ "
   CHARACTER*16, PARAMETER :: AStr= "$Author: phsht $ "
 END MODULE CConstants
 
