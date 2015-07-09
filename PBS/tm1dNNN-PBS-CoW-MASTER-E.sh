@@ -15,7 +15,7 @@ orgfile=$inpfile"-org"
 
 currdir=`pwd`
 
-binarydir=$HOME/Projects/tm1DNNN/EXE
+binarydir=/storage/disqs/phsht/Projects/tm1DNNN/EXE
 
 submitdir=$currdir
 [ -d ${submitdir} ] || mkdir ${submitdir}
@@ -28,14 +28,14 @@ jobdir=${submitdir}
 # this will use individual jobs along each x-line
 
 for irange in \
-1 2 5 10
+1 2 5 10 \
 #3 4 5 6 7 8 9 10 20 50 100 200 #500 1000
 do
 
-for imodel in 0 1 2 3
+for imodel in 3 1 2 0
 do
 
-for energy in 0.0 1.0
+for energy in 1.0 0.0 
 do
 
 jobname="NN-M$imodel-E$energy-R$irange"

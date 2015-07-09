@@ -15,7 +15,7 @@ orgfile=$inpfile"-org"
 
 currdir=`pwd`
 
-binarydir=$HOME/Projects/tm1DNNN/EXE
+binarydir=/storage/disqs/phsht/Projects/tm1DNNN/EXE
 
 submitdir=$currdir
 [ -d ${submitdir} ] || mkdir ${submitdir}
@@ -27,16 +27,17 @@ jobdir=${submitdir}
 # compute jobs for gate sweep
 # this will use individual jobs along each x-line
 
-for irange in \
-1 2 5 10 #3 4 5 6 7 8 9 10 20 50 100 200 #500 1000
-do
-
-for imodel in 0 1 2 3
-do
-
-for disorder in 0.1 \
-#0.0 1.0 2.0 5.0 10.0
+for disorder in 10.0 5.0 2.0 1.0 0.1 \ 
+#0.0 \
 #0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 5.0 6.0 7.0 8.0 9.0 10.0
+do
+
+for irange in \
+1 2 5 10 \
+#3 4 5 6 7 8 9 10 20 50 100 200 #500 1000
+do
+
+for imodel in 3 1 2 0
 do
 
 jobname="NN-M$imodel-D$disorder-R$irange"
@@ -128,7 +129,7 @@ echo "dRange       =               1">> $inpfile
 echo "DiagDis0     =        $disorder">> $inpfile   
 echo "DiagDis1     =        $disorder">> $inpfile   
 echo "dDiagDis     =        0.250000">> $inpfile   
-echo "Energy0      =       -10.0000">> $inpfile   
+echo "Energy0      =       -20.0000">> $inpfile   
 echo "Energy1      =        15.00000">> $inpfile   
 echo "dEnergy      =        0.100000">> $inpfile   
 echo "IKappaFlag   =               1">> $inpfile   
