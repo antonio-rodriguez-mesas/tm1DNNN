@@ -56,9 +56,9 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
      CASE(-1)
         EMat(iSite,iSite)= REAL(M-iSite+1,RKIND)
      CASE(0)
-        EMat(iSite,iSite)= En - Dis*(DRANDOM()-0.5D0)
+        EMat(iSite,iSite)= -(En - Dis*(DRANDOM()-0.5D0))
      CASE(1)
-        EMat(iSite,iSite)= En - Dis*(DRANDOM()-0.5D0)*SQRT(12.0D0)
+        EMat(iSite,iSite)= -(En - Dis*(DRANDOM()-0.5D0)*SQRT(12.0D0))
      !CASE(2)
         !EMat(iSite,iSite)= En - GRANDOM(ISeedDummy,0.0D0,Dis)
      END SELECT
@@ -70,12 +70,12 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiL,M,EMat,M,0.0D0,dummyMat,M)
 !!$  PRINT*,"HopMatiLE=", dummyMat; PAUSE
 
-  dummyMat= MATMUL(dummyMat,PSI_A)
+  dummyMat= MATMUL(dummyMat,TRANSPOSE(PSI_A))
 
 !!$  PSI_B= dummyMat + MATMUL(HopMatiLR,PSI_B)
 !!$  PRINT*,"PsiB=", PSI_B; PAUSE
-  CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiLR,M,PSI_B,M,1.0D0,dummyMat,M)
-  PSI_B= dummyMat
+  CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiLR,M,TRANSPOSE(PSI_B),M,1.0D0,dummyMat,M)
+  PSI_B= TRANSPOSE(dummyMat)
 !!$  PRINT*,"PsiB=", PSI_B; PAUSE
 
   !PRINT*,"PSIA(1,1),(2,1),(3,1),(4,1)",&
