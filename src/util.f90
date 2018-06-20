@@ -70,12 +70,12 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
   CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiL,M,EMat,M,0.0D0,dummyMat,M)
 !!$  PRINT*,"HopMatiLE=", dummyMat; PAUSE
 
-  dummyMat= MATMUL(dummyMat,TRANSPOSE(PSI_A))
+  dummyMat= MATMUL(dummyMat,PSI_A)
 
 !!$  PSI_B= dummyMat + MATMUL(HopMatiLR,PSI_B)
 !!$  PRINT*,"PsiB=", PSI_B; PAUSE
-  CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiLR,M,TRANSPOSE(PSI_B),M,1.0D0,dummyMat,M)
-  PSI_B= TRANSPOSE(dummyMat)
+  CALL DGEMM('N','N',M,M,M,1.0D0,HopMatiLR,M,PSI_B,M,1.0D0,dummyMat,M)
+  PSI_B= dummyMat
 !!$  PRINT*,"PsiB=", PSI_B; PAUSE
 
   !PRINT*,"PSIA(1,1),(2,1),(3,1),(4,1)",&
@@ -148,16 +148,16 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
            
 !!$           sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
 !!$                + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
-           sum= sum + (PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-                + (PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
+           sum= sum + (PSI_A(KIndex,JVec))*PSI_A(KIndex,IVec) &
+                + (PSI_B(KIndex,JVec))*PSI_B(KIndex,IVec)
 300     ENDDO
         
         DO 400 KIndex=1,M
            
-           PSI_A(IVec,KIndex)= PSI_A(IVec,KIndex) - &
-                sum * PSI_A(JVec,KIndex)
-           PSI_B(IVec,KIndex)= PSI_B(IVec,KIndex) - &
-                sum * PSI_B(JVec,KIndex)
+           PSI_A(KIndex,IVec)= PSI_A(KIndex,IVec) - &
+                sum * PSI_A(KIndex,JVec)
+           PSI_B(KIndex,IVec)= PSI_B(KIndex,IVec) - &
+                sum * PSI_B(KIndex,JVec)
            
 400     ENDDO
         
@@ -168,16 +168,16 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
      DO 500 KIndex=1,M                      
 !!$        norm= norm + CONJG(PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
 !!$             + CONJG(PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
-        norm= norm + (PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
-             + (PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
+        norm= norm + (PSI_A(KIndex,IVec)) * PSI_A(KIndex,IVec) &
+             + (PSI_B(KIndex,IVec)) * PSI_B(KIndex,IVec)
 500  ENDDO
      ! renormalization
      dummy= 1.D0/SQRT(norm)
      DO 600 KIndex=1,M
 !!$        PSI_A(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_A(IVec,KIndex)
 !!$        PSI_B(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_B(IVec,KIndex)
-        PSI_A(IVec,KIndex)= dummy * PSI_A(IVec,KIndex)
-        PSI_B(IVec,KIndex)= dummy * PSI_B(IVec,KIndex)
+        PSI_A(KIndex,IVec)= dummy * PSI_A(KIndex,IVec)
+        PSI_B(KIndex,IVec)= dummy * PSI_B(KIndex,IVec)
 600  ENDDO
      
      !	----------------------------------------------------------------
@@ -201,8 +201,8 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
            DO KIndex=1,M
 !!$              sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
 !!$                   + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
-              sum= sum + (PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-                   + (PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
+              sum= sum + (PSI_A(KIndex,JVec))*PSI_A(KIndex,IVec) &
+                   + (PSI_B(KIndex,JVec))*PSI_B(KIndex,IVec)
            ENDDO
            PRINT*,"Renorm: <",JVec,"|",IVec,">=",sum
         ENDDO
