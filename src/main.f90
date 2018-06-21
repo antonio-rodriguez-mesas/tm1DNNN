@@ -411,20 +411,22 @@ flux_loop: &
         ! iteration loop
         !--------------------------------------------------------------
 
+        ! Ilayer is the current horizontal position
+        Ilayer= 0
+
 tmm_loop:&
         DO Iter1= index1, MAX( (NOfIter)/(NOfOrtho), 1)
 
            DO Iter2= 1, NOfOrtho, 2
    
-              ! Ilayer is the current horizontal position
-              Ilayer= (Iter1-1)*NOfOrtho+Iter2
-              
               ! do the TM multiplication             
+              Ilayer= Ilayer + 1
               CALL TMMultNNN( PsiA, PsiB, Ilayer, &
                    HopMatiLR, HopMatiL, EMat, dummyMat, OnsitePotVec, &
                    Energy, DiagDis, IRange) 
 
-              CALL TMMultNNN( PsiB, PsiA, Ilayer+1, &
+              Ilayer= Ilayer + 1
+              CALL TMMultNNN( PsiB, PsiA, Ilayer, &
                    HopMatiLR, HopMatiL, EMat, dummyMat, OnsitePotVec, &
                    Energy, DiagDis, IRange)  
 
@@ -436,8 +438,8 @@ tmm_loop:&
            ! renormalize via Gram-Schmidt
            !-------------------------------------------------------
 
-           CALL ReNorm(PsiA,PsiB,gamma,gamma2,IRange,NOfOrtho)
-           !CALL ReNormBLAS(PsiA,PsiB,gamma,gamma2,IRange,1,NOfOrtho)
+           !CALL ReNorm(PsiA,PsiB,gamma,gamma2,IRange,NOfOrtho)
+           CALL ReNormBLAS(PsiA,PsiB,gamma,gamma2,IRange,1,NOfOrtho)
 
            IF(IWriteFlag.GE.MAXWriteFLAG+1) THEN   
               PRINT*,"DBG: Orth,iL,PsiA", iLayer, PsiA
@@ -464,7 +466,7 @@ tmm_loop:&
 
            DO iG=1, IRange
 
-              nGamma(IRange+1-iG)= gamma(iG)/REAL(NOfOrtho*Iter1)
+              nGamma(IRange+1-iG)= gamma(iG)/REAL(Ilayer)
 
               acc_variance(IRange+1-iG)=             &
                    SQRT( ABS(                        &
@@ -479,7 +481,7 @@ tmm_loop:&
            !-----------------------------------------------------------
 
            IF(IWriteFlag.GE.2) THEN
-              CALL WriteOutputGamma( Iter1, & 
+              CALL WriteOutputGamma( Ilayer, & 
                    nGamma, acc_variance, & 
                    NOfG, IErr )
               !PRINT*, "DBG: IErr=", IErr
@@ -494,8 +496,8 @@ tmm_loop:&
            !--------------------------------------------------------
 
            IF(IWriteFlag.GE.1 .AND. MOD(Iter1,NOfPrint).EQ.0 ) THEN
-              WRITE(*,4210) Iter1, nGamma(1), acc_variance(1)
-4210          FORMAT(I9.1, G15.7, G15.7)
+              WRITE(*,4210) Ilayer, NOfOrtho, nGamma(1), acc_variance(1)
+4210          FORMAT(2(I9.1), G15.7, G15.7)
            ENDIF
 
            !-----------------------------------------------------------
@@ -618,7 +620,7 @@ tmm_loop:&
         ! write the nGamma data to stdout
         !--------------------------------------------------------
 
-        WRITE(*,5010) Iter1, &
+        WRITE(*,5010) Ilayer, &
              DiagDis,Energy, Kappa
         WRITE(*,5012) nGamma(1), acc_variance(1)
 
@@ -710,7 +712,6 @@ tmm_loop:&
   
   PRINT*, "tm1dNNN: used TOTAL time=", IHours, "hrs ", &
        IMinutes,"mins ",ISeconds,"secs ", IMilliSeconds,"millisecs"
-
 
   STOP "TM1DNNN $Revision:$"
 

@@ -1,6 +1,6 @@
 ISeed        =            1277
 NOfIter      =       100000000
-NOfOrtho     =               2
+NOfOrtho     =               6
 NOfPrint     =          100000
 NOfGamma     =               1
 IModelFlag   =               0
@@ -10,7 +10,7 @@ IKeepFlag    =               1
 IWriteFlag   =               1
 ISortFlag    =               0
 IFluxFlag    =               1
-IRange0      =               1
+IRange0      =              14
 IRange1      =              34
 dIRange      =               1
 DiagDis0     =       15.000000000
