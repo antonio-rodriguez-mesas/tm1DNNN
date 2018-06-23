@@ -223,24 +223,36 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
      
 100 ENDDO
   
-!!$  ! determine whether NOrtho needs to be changed
-!!$  IF (IWriteFLAG.GE.5) THEN
-!!$     
-!!$     quot = SQRT(norm/normbefore)
-!!$     !PRINT*, "ReNorm(): NORTHO=", NORTHO, ", quot=", quot, norm, normbefore
-!!$     
-!!$     IF (quot.LT.MinAccuracy) THEN
-!!$        !       decrease NORTHO if accuracy is ba
-!!$        PRINT*, "ReNorm(): WRNG, normbefore, norm, quot=", normbefore,norm,quot
-!!$        PRINT*, "ReNorm(): WRNG, NORTHO=", NORTHO, " should be decreased!"
-!!$     ELSEIF (quot.GT.MaxAccuracy) THEN
-!!$        !       increase NORTHO if accuracy is good
-!!$        PRINT*, "ReNorm(): normbefore, norm, quot=", normbefore,norm,quot
-!!$        PRINT*, "ReNorm(): NORTHO=", NORTHO, " could be increased!"
-!!$     ENDIF
-!!$     
-!!$  ENDIF
+  ! determine whether NOrtho needs to be changed
+
+  IF (M .GT. 1) THEN
   
+     quot = SQRT(norm/normbefore)
+     
+     ! decrease NOrtho if accuracy is bad
+     IF (quot.LT.MinAccuracy .AND. NOrtho.GT.2) THEN
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): NOrtho=", NOrtho, &
+                ", quot=", quot, norm, normbefore
+        ENDIF
+        NOrtho = NOrtho-2
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): decreased NOrtho=", NOrtho
+        ENDIF
+     ! increase NOrtho if accuracy is good
+     ELSE IF (quot.GT.MaxAccuracy .AND. NOrtho.LT.10) THEN
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): NOrtho=", NOrtho, &
+                ", quot=", quot, norm, normbefore
+        ENDIF
+        NOrtho = NOrtho+2
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): increased NOrtho=", NOrtho
+        ENDIF
+     ENDIF
+     
+  ENDIF
+
   RETURN
   
 END SUBROUTINE ReNorm
@@ -346,35 +358,35 @@ SUBROUTINE ReNormBLAS(PSI_A,PSI_B,GAMMA,GAMMA2,MX,MY,NOrtho)
 
   ENDDO
   
-  ! determine whether NOrtho needs to be changed
-
-  IF (MXY .GT. 1) THEN
-  
-     quot = SQRT(norm/normbefore)
-     
-     ! decrease NOrtho if accuracy is bad
-     IF (quot.LT.MinAccuracy .AND. NOrtho.GT.2) THEN
-        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
-           PRINT*, "ReNormBLAS(): NOrtho=", NOrtho, &
-                ", quot=", quot, norm, normbefore
-        ENDIF
-        NOrtho = NOrtho-2
-        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
-           PRINT*, "ReNormBLAS(): decreased NOrtho=", NOrtho
-        ENDIF
-     ! increase NOrtho if accuracy is good
-     ELSE IF (quot.GT.MaxAccuracy .AND. NOrtho.LT.20) THEN
-        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
-           PRINT*, "ReNormBLAS(): NOrtho=", NOrtho, &
-                ", quot=", quot, norm, normbefore
-        ENDIF
-        NOrtho = NOrtho+2
-        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
-           PRINT*, "ReNormBLAS(): increased NOrtho=", NOrtho
-        ENDIF
-     ENDIF
-     
-  ENDIF
+!!$  ! determine whether NOrtho needs to be changed
+!!$
+!!$  IF (MXY .GT. 1) THEN
+!!$  
+!!$     quot = SQRT(norm/normbefore)
+!!$     
+!!$     ! decrease NOrtho if accuracy is bad
+!!$     IF (quot.LT.MinAccuracy .AND. NOrtho.GT.2) THEN
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): NOrtho=", NOrtho, &
+!!$                ", quot=", quot, norm, normbefore
+!!$        ENDIF
+!!$        NOrtho = NOrtho-2
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): decreased NOrtho=", NOrtho
+!!$        ENDIF
+!!$     ! increase NOrtho if accuracy is good
+!!$     ELSE IF (quot.GT.MaxAccuracy .AND. NOrtho.LT.20) THEN
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): NOrtho=", NOrtho, &
+!!$                ", quot=", quot, norm, normbefore
+!!$        ENDIF
+!!$        NOrtho = NOrtho+2
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): increased NOrtho=", NOrtho
+!!$        ENDIF
+!!$     ENDIF
+!!$     
+!!$  ENDIF
   
   RETURN
 END SUBROUTINE ReNormBLAS

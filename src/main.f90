@@ -409,7 +409,7 @@ flux_loop: &
 
         !--------------------------------------------------------------
         ! iteration loop
-        !--------------------------------------------------------------
+        !-------------------------------------------------------1-------
 
         ! Ilayer is the current horizontal position
         Ilayer= 0
@@ -438,8 +438,8 @@ tmm_loop:&
            ! renormalize via Gram-Schmidt
            !-------------------------------------------------------
 
-           !CALL ReNorm(PsiA,PsiB,gamma,gamma2,IRange,NOfOrtho)
-           CALL ReNormBLAS(PsiA,PsiB,gamma,gamma2,IRange,1,NOfOrtho)
+           CALL ReNorm(PsiA,PsiB,gamma,gamma2,IRange,NOfOrtho)
+           !CALL ReNormBLAS(PsiA,PsiB,gamma,gamma2,IRange,1,NOfOrtho)
 
            IF(IWriteFlag.GE.MAXWriteFLAG+1) THEN   
               PRINT*,"DBG: Orth,iL,PsiA", iLayer, PsiA
@@ -620,11 +620,11 @@ tmm_loop:&
         ! write the nGamma data to stdout
         !--------------------------------------------------------
 
-        WRITE(*,5010) Ilayer, &
+        WRITE(*,5010) Ilayer, NOfOrtho, &
              DiagDis,Energy, Kappa
         WRITE(*,5012) nGamma(1), acc_variance(1)
 
-5010    FORMAT("END @ ", I9.1, &
+5010    FORMAT("END @ ", 2(I9.1), &
              ",", G15.7, ",", G15.7,",", G15.7)
 5012    FORMAT("     ", &
              G15.7, ",", G15.7)
