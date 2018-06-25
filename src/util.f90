@@ -130,24 +130,18 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
   
   !PRINT*,"DBG: ReNorm()"
 
-!!$  norm= REAL(0.D0,RKIND)
-!!$  DO 50 KIndex=1,M                      
-!!$     norm= norm + CONJG(PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
-!!$          + CONJG(PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
-!!$50 ENDDO
-!!$  normbefore= norm
-!!$  
+  ! compute original norm of last state
+  norm= REAL(0.D0,RKIND)
+  DO 50 KIndex=1,M                      
+     norm= norm &
+          + PSI_A(KIndex,M) * PSI_A(KIndex,M) &
+          + PSI_B(KIndex,M) * PSI_B(KIndex,M)
+50 ENDDO
+  normbefore= norm
 
   DO 100 IVec=1,M
 
-!!$     ! calculation of normbefore
-!!$     normbefore= REAL(0.D0,RKIND)
-!!$     DO KIndex=1,M                      
-!!$        normbefore= normbefore &
-!!$             + (PSI_A(KIndex,IVec)) * PSI_A(KIndex,IVec) &
-!!$             + (PSI_B(KIndex,IVec)) * PSI_B(KIndex,IVec)
-!!$     ENDDO
-     
+     ! compute scalar product/projection
      DO JVec=1,IVec-1
         
         sum= 0.0D0
