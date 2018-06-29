@@ -33,7 +33,7 @@ CONTAINS
        STOP
     END SELECT
     
-    HoppingModel= -HoppingModel ! for negative kinetic energy
+    HoppingModel= HoppingModel ! for negative kinetic energy
 
     RETURN
   END FUNCTION HoppingModel

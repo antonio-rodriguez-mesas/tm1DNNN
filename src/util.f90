@@ -56,9 +56,9 @@ SUBROUTINE TMMultNNN(PSI_A,PSI_B, Ilayer, &
      CASE(-1)
         EMat(iSite,iSite)= REAL(M-iSite+1,RKIND)
      CASE(0)
-        EMat(iSite,iSite)= En - Dis*(DRANDOM()-0.5D0)
+        EMat(iSite,iSite)= -(En - Dis*(DRANDOM()-0.5D0))
      CASE(1)
-        EMat(iSite,iSite)= En - Dis*(DRANDOM()-0.5D0)*SQRT(12.0D0)
+        EMat(iSite,iSite)= -(En - Dis*(DRANDOM()-0.5D0)*SQRT(12.0D0))
      !CASE(2)
         !EMat(iSite,iSite)= En - GRANDOM(ISeedDummy,0.0D0,Dis)
      END SELECT
@@ -130,55 +130,56 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
   
   !PRINT*,"DBG: ReNorm()"
 
-!!$  norm= REAL(0.D0,RKIND)
-!!$  DO 50 KIndex=1,M                      
-!!$     norm= norm + CONJG(PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
-!!$          + CONJG(PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
-!!$50 ENDDO
-!!$  normbefore= norm
-!!$  
+  ! compute original norm of last state
+  norm= REAL(0.D0,RKIND)
+  DO 50 KIndex=1,M                      
+     norm= norm &
+          + PSI_A(KIndex,M) * PSI_A(KIndex,M) &
+          + PSI_B(KIndex,M) * PSI_B(KIndex,M)
+50 ENDDO
+  normbefore= norm
 
   DO 100 IVec=1,M
-     
-     DO 200 JVec=1,IVec-1
+
+     ! compute scalar product/projection
+     DO JVec=1,IVec-1
         
-        sum= CZERO
+        sum= 0.0D0
         
-        DO 300 KIndex=1,M
+        DO KIndex=1,M
            
-!!$           sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-!!$                + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
-           sum= sum + (PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-                + (PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
-300     ENDDO
+           sum= sum &
+                + (PSI_A(KIndex,JVec))*PSI_A(KIndex,IVec) &
+                + (PSI_B(KIndex,JVec))*PSI_B(KIndex,IVec)
         
-        DO 400 KIndex=1,M
-           
-           PSI_A(IVec,KIndex)= PSI_A(IVec,KIndex) - &
-                sum * PSI_A(JVec,KIndex)
-           PSI_B(IVec,KIndex)= PSI_B(IVec,KIndex) - &
-                sum * PSI_B(JVec,KIndex)
-           
-400     ENDDO
+        ENDDO
+        !PRINT*,IVec,JVec,sum
         
-200  ENDDO
+        DO KIndex=1,M
+           
+           PSI_A(KIndex,IVec)= PSI_A(KIndex,IVec) - &
+                sum * PSI_A(KIndex,JVec)
+           PSI_B(KIndex,IVec)= PSI_B(KIndex,IVec) - &
+                sum * PSI_B(KIndex,JVec)
+           
+        ENDDO
+        
+     ENDDO
      
      ! calculation of norm
      norm= REAL(0.D0,RKIND)
-     DO 500 KIndex=1,M                      
-!!$        norm= norm + CONJG(PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
-!!$             + CONJG(PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
-        norm= norm + (PSI_A(IVec,KIndex)) * PSI_A(IVec,KIndex) &
-             + (PSI_B(IVec,KIndex)) * PSI_B(IVec,KIndex)
-500  ENDDO
+     DO KIndex=1,M                      
+        norm= norm &
+             + (PSI_A(KIndex,IVec)) * PSI_A(KIndex,IVec) &
+             + (PSI_B(KIndex,IVec)) * PSI_B(KIndex,IVec)
+     ENDDO
+     
      ! renormalization
      dummy= 1.D0/SQRT(norm)
-     DO 600 KIndex=1,M
-!!$        PSI_A(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_A(IVec,KIndex)
-!!$        PSI_B(IVec,KIndex)= CMPLX(dummy,0.0D0,CKIND) * PSI_B(IVec,KIndex)
-        PSI_A(IVec,KIndex)= dummy * PSI_A(IVec,KIndex)
-        PSI_B(IVec,KIndex)= dummy * PSI_B(IVec,KIndex)
-600  ENDDO
+     DO KIndex=1,M
+        PSI_A(KIndex,IVec)= dummy * PSI_A(KIndex,IVec)
+        PSI_B(KIndex,IVec)= dummy * PSI_B(KIndex,IVec)
+     ENDDO
      
      !	----------------------------------------------------------------
      !	gammadummy is ordered s.t. the vector with the smallest overall 
@@ -191,18 +192,23 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
      GAMMA(IVec) = GAMMA(IVec) - dummy
      GAMMA2(IVec)= GAMMA2(IVec) + dummy*dummy
 
+!!$     ! determine whether NOrtho needs to be changed
+!!$     quot = SQRT(norm/normbefore)
+!!$     PRINT*, "ReNorm():", IVec, NOrtho, ", quot=", quot, norm, normbefore
+
+     GOTO 100
+     
      ! ----------------------------------------------------------------
      ! check orthogonality if desired
-     GOTO 100
+
      IF(IWriteFlag.GE.MAXWriteFlag) THEN
 
         DO JVec=1,IVec-1
            sum= REAL(0.D0,RKIND)
            DO KIndex=1,M
-!!$              sum= sum + CONJG(PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-!!$                   + CONJG(PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
-              sum= sum + (PSI_A(JVec,KIndex))*PSI_A(IVec,KIndex) &
-                   + (PSI_B(JVec,KIndex))*PSI_B(IVec,KIndex)
+              sum= sum &
+                   + (PSI_A(KIndex,JVec))*PSI_A(KIndex,IVec) &
+                   + (PSI_B(KIndex,JVec))*PSI_B(KIndex,IVec)
            ENDDO
            PRINT*,"Renorm: <",JVec,"|",IVec,">=",sum
         ENDDO
@@ -211,24 +217,36 @@ SUBROUTINE ReNorm(PSI_A,PSI_B,GAMMA,GAMMA2,M,NORTHO)
      
 100 ENDDO
   
-!!$  ! determine whether NOrtho needs to be changed
-!!$  IF (IWriteFLAG.GE.5) THEN
-!!$     
-!!$     quot = SQRT(norm/normbefore)
-!!$     !PRINT*, "ReNorm(): NORTHO=", NORTHO, ", quot=", quot, norm, normbefore
-!!$     
-!!$     IF (quot.LT.MinAccuracy) THEN
-!!$        !       decrease NORTHO if accuracy is ba
-!!$        PRINT*, "ReNorm(): WRNG, normbefore, norm, quot=", normbefore,norm,quot
-!!$        PRINT*, "ReNorm(): WRNG, NORTHO=", NORTHO, " should be decreased!"
-!!$     ELSEIF (quot.GT.MaxAccuracy) THEN
-!!$        !       increase NORTHO if accuracy is good
-!!$        PRINT*, "ReNorm(): normbefore, norm, quot=", normbefore,norm,quot
-!!$        PRINT*, "ReNorm(): NORTHO=", NORTHO, " could be increased!"
-!!$     ENDIF
-!!$     
-!!$  ENDIF
+  ! determine whether NOrtho needs to be changed
+
+  IF (M .GT. 1) THEN
   
+     quot = SQRT(norm/normbefore)
+     
+     ! decrease NOrtho if accuracy is bad
+     IF (quot.LT.MinAccuracy .AND. NOrtho.GT.2) THEN
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): NOrtho=", NOrtho, &
+                ", quot=", quot, norm, normbefore
+        ENDIF
+        NOrtho = NOrtho-2
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): decreased NOrtho=", NOrtho
+        ENDIF
+     ! increase NOrtho if accuracy is good
+     ELSE IF (quot.GT.MaxAccuracy .AND. NOrtho.LT.10) THEN
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): NOrtho=", NOrtho, &
+                ", quot=", quot, norm, normbefore
+        ENDIF
+        NOrtho = NOrtho+2
+        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+           PRINT*, "ReNorm(): increased NOrtho=", NOrtho
+        ENDIF
+     ENDIF
+     
+  ENDIF
+
   RETURN
   
 END SUBROUTINE ReNorm
@@ -255,6 +273,9 @@ END SUBROUTINE ReNorm
 
 SUBROUTINE ReNormBLAS(PSI_A,PSI_B,GAMMA,GAMMA2,MX,MY,NOrtho)
 
+  USE IConstants
+  USE IPara
+  
   INTEGER MX,MY,NOrtho
   
   REAL*8 PSI_A(MX*MY,MX*MY), PSI_B(MX*MY,MX*MY)
@@ -276,31 +297,35 @@ SUBROUTINE ReNormBLAS(PSI_A,PSI_B,GAMMA,GAMMA2,MX,MY,NOrtho)
   !       make the local variables static
   SAVE
 
-  !PRINT*, "ReNormBLAS(): NOrtho=", NOrtho
+  !PRINT*, "DBG: ReNormBLAS(): NOrtho=", NOrtho
   !D     PRINT*,"DBG: ReOrtho()"
   !D     PRINT*,"DBG: MinAccuracy=", MinAccuracy,
   !D    +          ", MaxAccuray=", MaxAccuracy
   
   MXY       = MX*MY
-  
+
+  ! compute original norm of last state
   normbefore= &
        ddot(MXY, PSI_A(1,MXY),1, PSI_A(1,MXY),1) + &
        ddot(MXY, PSI_B(1,MXY),1, PSI_B(1,MXY),1)
   
   DO IVec=1,MXY
+
+     ! compute scalar product/projection
      DO JVec=1,IVec-1
         
         sum= -( &
              ddot(MXY, PSI_A(1,JVec),1, PSI_A(1,IVec),1) + &
              ddot(MXY, PSI_B(1,JVec),1, PSI_B(1,IVec),1) &
              )
+        !PRINT*,IVec,JVec,sum
         
         call daxpy(MXY, sum, PSI_A(1,JVec),1, PSI_A(1,IVec),1)
         call daxpy(MXY, sum, PSI_B(1,JVec),1, PSI_B(1,IVec),1)
-        
+
      ENDDO
      
-     !          calculation of norm
+     ! calculation of norm
      norm= ddot(MXY, PSI_A(1,IVec),1, PSI_A(1,IVec),1) + &
           ddot(MXY, PSI_B(1,IVec),1, PSI_B(1,IVec),1)
      
@@ -309,41 +334,53 @@ SUBROUTINE ReNormBLAS(PSI_A,PSI_B,GAMMA,GAMMA2,MX,MY,NOrtho)
      call dscal(MXY, dummy, PSI_A(1,IVec), 1)
      call dscal(MXY, dummy, PSI_B(1,IVec), 1)
      
-     !          ----------------------------------------------------------------
-     !          gammadummy is ordered s.t. the vector with the smallest overall 
-     !          norm is last and the vector with the largest overall norm first. 
-     !          We sum this so that the smallest value is used for GAMMA(M)
-     !          and the largest for GAMMA(1). Same for GAMMA2(). Therefore, the
-     !          inverse of the smallest Lyapunov exponent is obtained by taking
-     !          LAMBDA(1) = N/GAMMA(M)
-     !           PRINT *,"DBG: dummy,LOG(dummy)", dummy,LOG(dummy)
+     ! ----------------------------------------------------------------
+     ! gammadummy is ordered s.t. the vector with the smallest overall 
+     ! norm is last and the vector with the largest overall norm first. 
+     ! We sum this so that the smallest value is used for GAMMA(M)
+     ! and the largest for GAMMA(1). Same for GAMMA2(). Therefore, the
+     ! inverse of the smallest Lyapunov exponent is obtained by taking
+     ! LAMBDA(1) = N/GAMMA(M)
+     ! PRINT *,"DBG: dummy,LOG(dummy)", dummy,LOG(dummy)
      
      dummy       = LOG(dummy)
-     
      GAMMA(IVec) = GAMMA(IVec) - dummy
      GAMMA2(IVec)= GAMMA2(IVec) + dummy*dummy
-     
+
+!!$     quot = SQRT(norm/normbefore)
+!!$     PRINT*, "ReNormBLAS():", IVec, NOrtho, ", quot=", quot, norm, normbefore
+
   ENDDO
   
-  !       determine whether NOrtho needs to be changed
-  
-  quot = SQRT(norm/normbefore)
-  PRINT*, "ReNormBLAS(): NOrtho=", NOrtho, ", quot=", quot, norm, normbefore
-
-  !       decrease NOrtho if accuracy is bad
-  IF (quot.LT.MinAccuracy) THEN
-     NOrtho = NOrtho-2
-     PRINT*, "ReNormBLAS(): NOrtho=", NOrtho
-     IF (NOrtho.LT.1) THEN
-        NOrtho = 1
-     ENDIF
-  ENDIF
-  
-  !       increase NOrtho if accuracy is good
-  IF (quot.GT.MaxAccuracy) THEN
-     NOrtho = NOrtho+2
-     PRINT*, "ReNormBLAS(): NOrtho=", NOrtho
-  ENDIF
+!!$  ! determine whether NOrtho needs to be changed
+!!$
+!!$  IF (MXY .GT. 1) THEN
+!!$  
+!!$     quot = SQRT(norm/normbefore)
+!!$     
+!!$     ! decrease NOrtho if accuracy is bad
+!!$     IF (quot.LT.MinAccuracy .AND. NOrtho.GT.2) THEN
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): NOrtho=", NOrtho, &
+!!$                ", quot=", quot, norm, normbefore
+!!$        ENDIF
+!!$        NOrtho = NOrtho-2
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): decreased NOrtho=", NOrtho
+!!$        ENDIF
+!!$     ! increase NOrtho if accuracy is good
+!!$     ELSE IF (quot.GT.MaxAccuracy .AND. NOrtho.LT.20) THEN
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): NOrtho=", NOrtho, &
+!!$                ", quot=", quot, norm, normbefore
+!!$        ENDIF
+!!$        NOrtho = NOrtho+2
+!!$        IF(IWriteFLAG.EQ.MAXWriteFLAG) THEN
+!!$           PRINT*, "ReNormBLAS(): increased NOrtho=", NOrtho
+!!$        ENDIF
+!!$     ENDIF
+!!$     
+!!$  ENDIF
   
   RETURN
 END SUBROUTINE ReNormBLAS
